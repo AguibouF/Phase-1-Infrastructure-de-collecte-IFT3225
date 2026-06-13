@@ -1,0 +1,415 @@
+{
+  "info": {
+    "name": "Ambiance API — Cafétéria Roger-Gaudry",
+    "description": "Collection complète pour tester l'API d'ambiance.\n\n**Variables à configurer :**\n- `baseUrl` : URL du serveur (défaut `http://localhost:3000`)\n- `apiKey` : clé API d'un device (à copier après création via 'Créer un appareil')\n- `locationSlug` : slug du lieu testé (défaut `cafeteria-roger-gaudry`)\n\n**Ordre suggéré pour les tests :**\n1. Setup → Créer un lieu\n2. Setup → Créer un appareil (copier `apiKey` dans les variables)\n3. Collecte → envoyer quelques mesures et observations\n4. Auth — tests négatifs → vérifier 401/403\n5. Endpoints sémantiques → consulter les vues calculées",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "apiKey", "value": "", "type": "string" },
+    { "key": "locationSlug", "value": "cafeteria-roger-gaudry", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Setup (gestion)",
+      "item": [
+        {
+          "name": "Créer un lieu",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"cafeteria-roger-gaudry\",\n  \"displayName\": \"Cafétéria Roger-Gaudry\",\n  \"city\": \"montreal\",\n  \"type\": \"cafeteria\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Lister les lieux",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Créer un appareil (récupère la clé API)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.status === 'success' && body.data.apiKey) {",
+                  "  pm.collectionVariables.set('apiKey', body.data.apiKey);",
+                  "  console.log('Clé API enregistrée dans les variables de collection.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"phone-de-test\",\n  \"locationSlug\": \"{{locationSlug}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/devices",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "devices"]
+            }
+          }
+        },
+        {
+          "name": "Lister les appareils",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/v1/devices",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "devices"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collecte (auth requise)",
+      "item": [
+        {
+          "name": "POST mesure unique",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"noise_level\",\n  \"value\": 58.4,\n  \"unit\": \"dB\",\n  \"locationSlug\": \"{{locationSlug}}\",\n  \"timestamp\": \"2026-06-01T14:32:10Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements"]
+            }
+          }
+        },
+        {
+          "name": "POST observation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"locationSlug\": \"{{locationSlug}}\",\n  \"density\": \"Fréquenté\",\n  \"proximity\": \"Fréquenté\",\n  \"vibe\": \"Sociable\",\n  \"notes\": \"Beaucoup d'étudiants à l'heure du dîner\",\n  \"timestamp\": \"2026-06-01T14:32:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/observations",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "observations"]
+            }
+          }
+        },
+        {
+          "name": "POST mesures en batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"type\": \"noise_level\", \"value\": 52.1, \"unit\": \"dB\", \"locationSlug\": \"{{locationSlug}}\", \"timestamp\": \"2026-06-01T14:30:00Z\" },\n  { \"type\": \"noise_level\", \"value\": 56.7, \"unit\": \"dB\", \"locationSlug\": \"{{locationSlug}}\", \"timestamp\": \"2026-06-01T14:30:30Z\" },\n  { \"type\": \"noise_level\", \"value\": 61.2, \"unit\": \"dB\", \"locationSlug\": \"{{locationSlug}}\", \"timestamp\": \"2026-06-01T14:31:00Z\" }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements", "batch"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — tests négatifs",
+      "item": [
+        {
+          "name": "POST mesure sans en-tête Authorization → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Code machine MISSING_AUTH\", () => {",
+                  "  pm.expect(pm.response.json().error.code).to.eql('MISSING_AUTH');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"noise_level\",\n  \"value\": 58.4,\n  \"unit\": \"dB\",\n  \"locationSlug\": \"{{locationSlug}}\",\n  \"timestamp\": \"2026-06-01T14:32:10Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements"]
+            }
+          }
+        },
+        {
+          "name": "POST mesure avec clé invalide → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Code machine FORBIDDEN\", () => {",
+                  "  pm.expect(pm.response.json().error.code).to.eql('FORBIDDEN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer cle-completement-bidon-12345" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"noise_level\",\n  \"value\": 58.4,\n  \"unit\": \"dB\",\n  \"locationSlug\": \"{{locationSlug}}\",\n  \"timestamp\": \"2026-06-01T14:32:10Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements"]
+            }
+          }
+        },
+        {
+          "name": "POST mesure avec corps invalide → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 ou 422\", () => {",
+                  "  pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"noise_level\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultation brute",
+      "item": [
+        {
+          "name": "GET mesures (par lieu, dernière heure)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/measurements?locationSlug={{locationSlug}}&last=1h",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "measurements"],
+              "query": [
+                { "key": "locationSlug", "value": "{{locationSlug}}" },
+                { "key": "last", "value": "1h" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET observations (paginées)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/observations?locationSlug={{locationSlug}}&page=1&perPage=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "observations"],
+              "query": [
+                { "key": "locationSlug", "value": "{{locationSlug}}" },
+                { "key": "page", "value": "1" },
+                { "key": "perPage", "value": "25" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Endpoints sémantiques",
+      "item": [
+        {
+          "name": "GET /ambiance/:slug/now",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Enveloppe success\", () => {",
+                  "  pm.expect(pm.response.json().status).to.eql('success');",
+                  "});",
+                  "pm.test(\"ambianceLabel présent\", () => {",
+                  "  pm.expect(pm.response.json().data).to.have.property('ambianceLabel');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/{{locationSlug}}/now?window=30m",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "{{locationSlug}}", "now"],
+              "query": [{ "key": "window", "value": "30m" }]
+            }
+          }
+        },
+        {
+          "name": "GET /ambiance/:slug/quiet-hours",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/{{locationSlug}}/quiet-hours?days=30&threshold=55",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "{{locationSlug}}", "quiet-hours"],
+              "query": [
+                { "key": "days", "value": "30" },
+                { "key": "threshold", "value": "55" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /ambiance/compare",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/compare?locations=cafeteria-roger-gaudry,bibliotheque-edouard-montpetit&window=1h",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "compare"],
+              "query": [
+                {
+                  "key": "locations",
+                  "value": "cafeteria-roger-gaudry,bibliotheque-edouard-montpetit"
+                },
+                { "key": "window", "value": "1h" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /ambiance/:slug/history (last)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/{{locationSlug}}/history?last=3h&bucket=15m",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "{{locationSlug}}", "history"],
+              "query": [
+                { "key": "last", "value": "3h" },
+                { "key": "bucket", "value": "15m" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /ambiance/:slug/history (from/to)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/{{locationSlug}}/history?from=2026-06-01T08:00:00Z&to=2026-06-01T18:00:00Z&bucket=1h",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "{{locationSlug}}", "history"],
+              "query": [
+                { "key": "from", "value": "2026-06-01T08:00:00Z" },
+                { "key": "to", "value": "2026-06-01T18:00:00Z" },
+                { "key": "bucket", "value": "1h" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET history avec last + from → doit retourner 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Code machine VALIDATION_ERROR\", () => {",
+                  "  pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v1/ambiance/{{locationSlug}}/history?last=3h&from=2026-06-01T08:00:00Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "ambiance", "{{locationSlug}}", "history"],
+              "query": [
+                { "key": "last", "value": "3h" },
+                { "key": "from", "value": "2026-06-01T08:00:00Z" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "info": {
+    "name": "Ambiance Collecte - IFT3225 Phase 1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection de test des endpoints. Variables: {{baseUrl}}, {{deviceKey}}, {{adminKey}}."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "deviceKey", "value": "dev_REMPLACER_PAR_CLE_DU_SEED" },
+    { "key": "adminKey", "value": "change-me-admin-key" }
+  ],
+  "item": [
+    { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/v1/health" } },
+    { "name": "GET locations", "request": { "method": "GET", "url": "{{baseUrl}}/v1/locations" } },
+    { "name": "POST device (NON protégé - faille volontaire)", "request": {
+        "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/v1/devices",
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"mon-tel\",\n  \"locationSlug\": \"cafeteria-roger-gaudry\"\n}" } } },
+    { "name": "POST measurement (x-api-key)", "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{deviceKey}}" }],
+        "url": "{{baseUrl}}/v1/measurements",
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"noise_level\",\n  \"value\": 67.4,\n  \"unit\": \"dB\",\n  \"locationSlug\": \"cafeteria-roger-gaudry\",\n  \"timestamp\": \"2026-06-13T16:00:00Z\"\n}" } } },
+    { "name": "POST measurement SANS clé (401)", "request": {
+        "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/v1/measurements",
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"noise_level\",\n  \"value\": 67.4,\n  \"unit\": \"dB\",\n  \"locationSlug\": \"cafeteria-roger-gaudry\",\n  \"timestamp\": \"2026-06-13T16:00:00Z\"\n}" } } },
+    { "name": "POST observation (x-api-key)", "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{deviceKey}}" }],
+        "url": "{{baseUrl}}/v1/observations",
+        "body": { "mode": "raw", "raw": "{\n  \"locationSlug\": \"cafeteria-roger-gaudry\",\n  \"density\": \"Fréquenté\",\n  \"proximity\": \"Serré\",\n  \"vibe\": \"Sociable\",\n  \"notes\": \"heure de pointe\",\n  \"timestamp\": \"2026-06-13T16:00:00Z\"\n}" } } },
+    { "name": "GET measurements (filtré)", "request": { "method": "GET", "url": "{{baseUrl}}/v1/measurements?locationSlug=cafeteria-roger-gaudry&last=6h&perPage=10" } },
+    { "name": "GET ambiance now", "request": { "method": "GET", "url": "{{baseUrl}}/v1/ambiance/cafeteria-roger-gaudry/now?window=30m" } },
+    { "name": "GET ambiance quiet-hours", "request": { "method": "GET", "url": "{{baseUrl}}/v1/ambiance/cafeteria-roger-gaudry/quiet-hours?days=14&threshold=55" } },
+    { "name": "GET ambiance compare", "request": { "method": "GET", "url": "{{baseUrl}}/v1/ambiance/compare?locations=cafeteria-roger-gaudry,bibliotheque-edc&window=1h" } },
+    { "name": "GET ambiance history", "request": { "method": "GET", "url": "{{baseUrl}}/v1/ambiance/cafeteria-roger-gaudry/history?last=6h&bucket=30m" } },
+    { "name": "DELETE device (clé admin)", "request": {
+        "method": "DELETE", "header": [{ "key": "x-api-key", "value": "{{adminKey}}" }],
+        "url": "{{baseUrl}}/v1/devices/REMPLACER_PAR_ID" } }
+  ]
+}

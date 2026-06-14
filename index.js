@@ -1,18 +1,20 @@
-import "dotenv/config";
-
-import app from "./src/app.js";
-import { connectDB } from "./src/data/db.js";
+require('dotenv').config();
+const { createApp } = require('./src/app');
+const { connectDB } = require('./src/config/db');
 
 const PORT = process.env.PORT || 3000;
 
-// Démarrage : on établit d'abord la connexion Mongo, puis on écoute.
-connectDB()
-  .then(() => {
+(async () => {
+  try {
+    await connectDB();
+    const app = createApp();
     app.listen(PORT, () => {
-      console.log(`Serveur démarré sur http://localhost:${PORT}`);
+      // eslint-disable-next-line no-console
+      console.log(`✓ Serveur ambiance à l'écoute sur http://localhost:${PORT} (API: /v1)`);
     });
-  })
-  .catch((err) => {
-    console.error("Échec du démarrage du serveur :", err.message);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Échec du démarrage:', err.message);
     process.exit(1);
-  });
+  }
+})();

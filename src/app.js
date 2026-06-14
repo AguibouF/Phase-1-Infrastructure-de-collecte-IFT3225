@@ -1,33 +1,47 @@
-import express from "express";
-import cors from "cors";
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
 
-import ambianceRoutes from "./routes/ambiance.js";
-import devicesRoutes from "./routes/devices.js";
-import locationsRoutes from "./routes/locations.js";
-import measurementsRoutes from "./routes/measurements.js";
-import observationsRoutes from "./routes/observations.js";
+const rateLimiter = require('./middlewares/rateLimit');
+const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
+const { meta } = require('./utils/responses');
 
-const app = express();
+const devices = require('./routes/devices');
+const locations = require('./routes/locations');
+const measurements = require('./routes/measurements');
+const observations = require('./routes/observations');
+const ambiance = require('./routes/ambiance');
 
-// Middlewares globaux
-app.use(express.json());
-app.use(cors());
+function createApp() {
+  const app = express();
 
-// Montage des routes préfixées /v1
-app.use("/v1/ambiance", ambianceRoutes);
-app.use("/v1/devices", devicesRoutes);
-app.use("/v1/locations", locationsRoutes);
-app.use("/v1/measurements", measurementsRoutes);
-app.use("/v1/observations", observationsRoutes);
+  app.use(cors());
+  app.use(express.json()); // parse le corps JSON des requêtes
+  if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
+  app.use(rateLimiter);
 
-// Gestionnaire d'erreurs global
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({
-    status: "error",
-    error: { code: "INTERNAL_ERROR", message: "Erreur interne du serveur." },
-    meta: { generatedAt: new Date().toISOString() },
+  // Santé / racine
+  app.get('/', (_req, res) => res.json({ status: 'success', data: { name: 'ambiance-collecte', version: 'v1' }, meta: meta() }));
+  app.get('/v1/health', (_req, res) => res.json({ status: 'success', data: { ok: true }, meta: meta() }));
+
+  // Ressources
+  app.use('/v1/devices', devices);
+  app.use('/v1/locations', locations);
+  app.use('/v1/measurements', measurements);
+  app.use('/v1/observations', observations);
+  app.use('/v1/ambiance', ambiance);
+
+  // 400 si JSON malformé (capté avant le 404)
+  app.use((err, _req, res, next) => {
+    if (err.type === 'entity.parse.failed') {
+      return res.status(400).json({ status: 'error', error: { code: 'VALIDATION_ERROR', message: 'Corps JSON invalide.' }, meta: meta() });
+    }
+    next(err);
   });
-});
 
-export default app;
+  app.use(notFoundHandler);
+  app.use(errorHandler);
+  return app;
+}
+
+module.exports = { createApp };

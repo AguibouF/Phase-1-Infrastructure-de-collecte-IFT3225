@@ -1,19 +1,25 @@
 {
-  "name": "phase-1-infrastructure-de-collecte-ift3225",
+  "name": "ambiance-collecte-server",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Serveur Express + MongoDB Atlas pour la collecte environnementale (ambiance des lieux) — Phase 1, IFT3225.",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "node --watch index.js",
+    "seed": "node scripts/seed.js",
+    "bridge": "node bridge/bridge.js"
   },
+  "keywords": ["express", "mongodb", "phyphox", "ift3225", "ambiance"],
+  "author": "Équipe IFT3225",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.4.1"
+    "express-rate-limit": "^7.4.0",
+    "mongoose": "^8.6.0",
+    "morgan": "^1.10.0"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.3"
-  }
+  "engines": { "node": ">=18" }
 }

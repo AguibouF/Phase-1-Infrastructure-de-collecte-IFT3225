@@ -35,7 +35,7 @@ npm start                   # démarre le serveur sur http://localhost:3000
 L'organisation sépare routes, modèles et middlewares (pas de mégafichier `index.js`) :
 
 ```
-mon-serveur/
+rapport/
 ├── index.js                 # point d'entrée : connecte la DB puis démarre Express
 ├── src/
 │   ├── app.js               # construction de l'app Express (middlewares + montage des routes)

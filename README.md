@@ -1,6 +1,6 @@
 # Serveur de collecte environnementale — Ambiance des lieux
 
-Autheur:
+Autheurs :
 - Aguibou FOFANA -- 20332292
 
 - Mamadou TRAORE -- 20290120

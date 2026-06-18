@@ -1,7 +1,9 @@
 # Serveur de collecte environnementale — Ambiance des lieux
 
 Autheur:
-Aguibou FOFANA - 20332292
+Aguibou FOFANA -- 20332292
+Mamadou TRAORE -- 20290120
+Kofi OSEL -- 20272184
 
 API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`). Réalisé pour IFT3225 — Phase 1.
 

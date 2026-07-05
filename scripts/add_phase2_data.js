@@ -88,7 +88,7 @@ async function run() {
         timestamp: ts,
       });
 
-      // 1 observation par mesure
+      // 1 observation par mesures
       const noisy = value > 60;
       observations.push({
         locationSlug: locSlug,

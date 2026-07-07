@@ -1,0 +1,145 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.app-header p {
+  color: #7f8c8d;
+}
+
+.map-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.map-section h2 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.location-detail {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.back-button:hover {
+  background: #2980b9;
+}
+
+.location-header {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.location-header h1 {
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.location-meta {
+  color: #7f8c8d;
+}
+
+.ambiance-badge {
+  margin: 20px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.badge.calme {
+  background: #27ae60;
+  color: white;
+}
+
+.badge.modéré {
+  background: #f39c12;
+  color: white;
+}
+
+.badge.animé {
+  background: #e74c3c;
+  color: white;
+}
+
+.history-section {
+  margin-top: 30px;
+}
+
+.history-section h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.history-placeholder {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.history-placeholder pre {
+  background: white;
+  padding: 15px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 12px;
+}

@@ -21,7 +21,7 @@ router.get('/', async (req, res, next) => {
       Location.find(filter).sort(sort).skip(skip).limit(perPage),
       Location.countDocuments(filter),
     ]);
-    success(res, 200, items.map((d) => ({ slug: d.slug, displayName: d.displayName, city: d.city, type: d.type })), paginationMeta(page, perPage, total));
+    success(res, 200, items.map((d) => ({ slug: d.slug, displayName: d.displayName, city: d.city, type: d.type, latitude: d.latitude, longitude: d.longitude })), paginationMeta(page, perPage, total));
   } catch (e) { next(e); }
 });
 

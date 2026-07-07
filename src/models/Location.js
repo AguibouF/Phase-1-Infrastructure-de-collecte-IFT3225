@@ -14,6 +14,8 @@ const locationSchema = new mongoose.Schema(
     displayName: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true, lowercase: true },
     type: { type: String, required: true, trim: true, lowercase: true }, // cafeteria, bibliotheque, ...
+    latitude: { type: Number, required: false, min: -90, max: 90 },
+    longitude: { type: Number, required: false, min: -180, max: 180 },
   },
   { timestamps: true }
 );

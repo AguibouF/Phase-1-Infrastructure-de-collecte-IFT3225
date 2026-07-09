@@ -97,6 +97,31 @@ body {
   margin: 20px 0;
 }
 
+.ambiance-section {
+  margin: 30px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.ambiance-section h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.ambiance-metadata {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #dee2e6;
+  font-size: 14px;
+  color: #666;
+}
+
+.ambiance-metadata p {
+  margin: 5px 0;
+}
+
 .badge {
   display: inline-block;
   padding: 10px 20px;
@@ -120,8 +145,17 @@ body {
   color: white;
 }
 
+.badge.default {
+  background: #7f8c8d;
+  color: white;
+}
+
 .history-section {
   margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
 }
 
 .history-section h2 {
@@ -129,17 +163,91 @@ body {
   margin-bottom: 15px;
 }
 
-.history-placeholder {
-  background: #f8f9fa;
-  padding: 20px;
+.chart-container {
+  background: white;
+  padding: 15px;
   border-radius: 4px;
   border: 1px solid #dee2e6;
 }
 
-.history-placeholder pre {
+.quiet-hours-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.quiet-hours-section h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.quiet-hours-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiet-hour-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
   background: white;
-  padding: 15px;
   border-radius: 4px;
-  overflow-x: auto;
-  font-size: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.quiet-hour-day {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.quiet-hour-range {
+  color: #666;
+}
+
+.quiet-hours-metadata {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #dee2e6;
+  font-size: 14px;
+  color: #666;
+}
+
+.quiet-hours-metadata p {
+  margin: 5px 0;
+}
+
+.no-data {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.map-legend {
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.map-legend h4 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }

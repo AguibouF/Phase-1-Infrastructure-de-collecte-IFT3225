@@ -6,6 +6,7 @@ const { success, errors } = require('../utils/responses');
 const { parsePagination, paginationMeta } = require('../utils/pagination');
 const { buildTimeWindow, isValidDate } = require('../utils/time');
 const { deviceAuth } = require('../middlewares/auth');
+const { userAuth } = require('../middlewares/userAuth');
 
 const router = express.Router();
 
@@ -28,6 +29,35 @@ router.post('/', deviceAuth, async (req, res, next) => {
     const o = await Observation.create({
       locationSlug: b.locationSlug, density: b.density, proximity: b.proximity,
       vibe: b.vibe, notes: b.notes || '', timestamp: new Date(b.timestamp),
+    });
+    success(res, 201, o.toJSON());
+  } catch (e) { next(e); }
+});
+
+// POST /v1/observations/user — protégé (JWT token utilisateur)
+router.post('/user', userAuth, async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    const missing = [];
+    for (const f of ['locationSlug', 'density', 'proximity', 'vibe']) if (!b[f]) missing.push({ field: f, issue: 'missing' });
+    if (missing.length) throw errors.validation('Observation invalide.', missing);
+
+    const invalid = [];
+    if (!DENSITY.includes(b.density)) invalid.push({ field: 'density', issue: 'unsupported' });
+    if (!VIBE.includes(b.vibe)) invalid.push({ field: 'vibe', issue: 'unsupported' });
+    if (!PROXIMITY.includes(b.proximity)) invalid.push({ field: 'proximity', issue: 'unsupported' });
+    if (invalid.length) throw errors.invalidValue('Valeur d\'observation invalide.', invalid);
+
+    if (!(await Location.findOne({ slug: String(b.locationSlug).toLowerCase() }))) throw errors.locationNotFound();
+    
+    const o = await Observation.create({
+      locationSlug: b.locationSlug, 
+      density: b.density, 
+      proximity: b.proximity,
+      vibe: b.vibe, 
+      notes: b.notes || '', 
+      timestamp: new Date(),
+      author: req.user.userId // Lier l'observation à l'utilisateur
     });
     success(res, 201, o.toJSON());
   } catch (e) { next(e); }

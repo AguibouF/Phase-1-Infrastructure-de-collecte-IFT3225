@@ -28,4 +28,26 @@ export const ambianceApi = {
     const response = await axios.get(`${API_BASE_URL}/ambiance/${slug}/quiet-hours?${queryParams}`);
     return response.data;
   },
+
+  // Inscription
+  register: async (username, email, password) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/register`, { username, email, password });
+    return response.data;
+  },
+
+  // Connexion
+  login: async (username, password) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, { username, password });
+    return response.data;
+  },
+
+  // Soumettre une observation (authentifié)
+  submitObservation: async (token, observationData) => {
+    const response = await axios.post(`${API_BASE_URL}/observations/user`, observationData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
 };

@@ -16,6 +16,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [authView, setAuthView] = useState(null); // 'login' ou 'register'
+  
+  // État des favoris
+  const [favorites, setFavorites] = useState([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
@@ -63,10 +67,52 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setToken(null);
+    setFavorites([]);
+    setShowFavoritesOnly(false);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setAuthView(null);
   };
+
+  // Charger les favoris quand l'utilisateur se connecte
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (user && token) {
+        try {
+          const response = await ambianceApi.getFavorites(token);
+          setFavorites(response.data.favoriteLocations || []);
+        } catch (err) {
+          console.error('Erreur chargement favoris:', err);
+        }
+      }
+    };
+    loadFavorites();
+  }, [user, token]);
+
+  const handleToggleFavorite = async (locationSlug) => {
+    if (!user || !token) return;
+
+    try {
+      if (favorites.includes(locationSlug)) {
+        await ambianceApi.removeFavorite(token, locationSlug);
+        setFavorites(favorites.filter(slug => slug !== locationSlug));
+      } else {
+        await ambianceApi.addFavorite(token, locationSlug);
+        setFavorites([...favorites, locationSlug]);
+      }
+    } catch (err) {
+      console.error('Erreur toggle favori:', err);
+    }
+  };
+
+  const isLocationFavorite = (locationSlug) => {
+    return favorites.includes(locationSlug);
+  };
+
+  // Filtrer les lieux selon les favoris
+  const filteredLocations = showFavoritesOnly 
+    ? locations.filter(loc => favorites.includes(loc.slug))
+    : locations;
 
   if (loading) return <div className="loading">Chargement...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -117,6 +163,16 @@ function App() {
             <button onClick={() => setAuthView('login')} className="login-button">Connexion</button>
           )}
         </div>
+        {user && (
+          <div className="filter-buttons">
+            <button 
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
+            >
+              {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
+            </button>
+          </div>
+        )}
       </header>
 
       {selectedLocation ? (
@@ -125,12 +181,14 @@ function App() {
           onBack={() => setSelectedLocation(null)} 
           user={user}
           token={token}
+          isFavorite={isLocationFavorite(selectedLocation.slug)}
+          onToggleFavorite={() => handleToggleFavorite(selectedLocation.slug)}
         />
       ) : (
         <div className="map-section">
-          <h2>Carte des lieux</h2>
+          <h2>Carte des lieux {showFavoritesOnly ? '(Favoris)' : ''}</h2>
           <MapView 
-            locations={locations} 
+            locations={filteredLocations} 
             onLocationClick={setSelectedLocation} 
           />
         </div>

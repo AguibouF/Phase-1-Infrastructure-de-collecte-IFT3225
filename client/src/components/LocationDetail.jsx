@@ -5,7 +5,7 @@ import { ambianceApi } from '../api/ambianceApi';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const LocationDetail = ({ location, onBack, user, token }) => {
+const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFavorite }) => {
   const [ambiance, setAmbiance] = useState(null);
   const [history, setHistory] = useState(null);
   const [quietHours, setQuietHours] = useState(null);
@@ -104,6 +104,14 @@ const LocationDetail = ({ location, onBack, user, token }) => {
       <div className="location-header">
         <h1>{location.displayName}</h1>
         <p className="location-meta">{location.type} • {location.city}</p>
+        {user && (
+          <button 
+            onClick={onToggleFavorite} 
+            className={`favorite-button ${isFavorite ? 'active' : ''}`}
+          >
+            {isFavorite ? '★ Favori' : '☆ Ajouter aux favoris'}
+          </button>
+        )}
       </div>
 
       {ambiance && (

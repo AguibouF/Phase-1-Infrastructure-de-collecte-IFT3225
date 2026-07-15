@@ -50,4 +50,34 @@ export const ambianceApi = {
     });
     return response.data;
   },
+
+  // Ajouter un lieu aux favoris
+  addFavorite: async (token, locationSlug) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/favorites`, { locationSlug }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
+
+  // Retirer un lieu des favoris
+  removeFavorite: async (token, locationSlug) => {
+    const response = await axios.delete(`${API_BASE_URL}/auth/favorites/${locationSlug}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
+
+  // Récupérer les lieux favoris
+  getFavorites: async (token) => {
+    const response = await axios.get(`${API_BASE_URL}/auth/favorites`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
 };

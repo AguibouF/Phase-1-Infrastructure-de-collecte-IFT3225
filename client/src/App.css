@@ -79,6 +79,37 @@ body {
   background: #c0392b;
 }
 
+.filter-buttons {
+  margin-top: 15px;
+}
+
+.filter-button {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  color: #2c3e50;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.filter-button:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.filter-button.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.filter-button.active:hover {
+  background: #2980b9;
+  border-color: #2980b9;
+}
+
 .map-section {
   background: white;
   padding: 20px;
@@ -491,4 +522,32 @@ body {
 
 .cancel-button:hover {
   background: #7f8c8d;
+}
+
+.favorite-button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  color: #2c3e50;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.favorite-button:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.favorite-button.active {
+  background: #f39c12;
+  color: white;
+  border-color: #f39c12;
+}
+
+.favorite-button.active:hover {
+  background: #e67e22;
+  border-color: #e67e22;
 }

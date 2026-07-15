@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { success, errors } = require('../utils/responses');
+const { userAuth } = require('../middlewares/userAuth');
 
 const router = express.Router();
 
@@ -98,6 +99,66 @@ router.post('/login', async (req, res, next) => {
         favoriteLocations: user.favoriteLocations
       },
       token
+    });
+  } catch (e) { next(e); }
+});
+
+// POST /v1/auth/favorites - Ajouter un lieu aux favoris
+router.post('/favorites', userAuth, async (req, res, next) => {
+  try {
+    const { locationSlug } = req.body || {};
+    
+    if (!locationSlug) {
+      throw errors.validation('Champ requis manquant', [
+        { field: 'locationSlug', issue: 'missing' }
+      ]);
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      throw errors.notFound('USER_NOT_FOUND', 'Utilisateur non trouvé');
+    }
+
+    if (!user.favoriteLocations.includes(locationSlug)) {
+      user.favoriteLocations.push(locationSlug);
+      await user.save();
+    }
+
+    success(res, 200, {
+      favoriteLocations: user.favoriteLocations
+    });
+  } catch (e) { next(e); }
+});
+
+// DELETE /v1/auth/favorites/:locationSlug - Retirer un lieu des favoris
+router.delete('/favorites/:locationSlug', userAuth, async (req, res, next) => {
+  try {
+    const { locationSlug } = req.params;
+    
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      throw errors.notFound('USER_NOT_FOUND', 'Utilisateur non trouvé');
+    }
+
+    user.favoriteLocations = user.favoriteLocations.filter(slug => slug !== locationSlug);
+    await user.save();
+
+    success(res, 200, {
+      favoriteLocations: user.favoriteLocations
+    });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/auth/favorites - Récupérer les lieux favoris
+router.get('/favorites', userAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      throw errors.notFound('USER_NOT_FOUND', 'Utilisateur non trouvé');
+    }
+
+    success(res, 200, {
+      favoriteLocations: user.favoriteLocations
     });
   } catch (e) { next(e); }
 });

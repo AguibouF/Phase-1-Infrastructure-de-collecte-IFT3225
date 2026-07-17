@@ -4,10 +4,10 @@ Autheurs :
 - Aguibou FOFANA -- 20332292
 
 - Mamadou TRAORE -- 20290120
-  
+
 - Kofi OSEL -- 20272184
 
-API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`). Réalisé pour IFT3225 — Phase 1.
+API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`). Réalisé pour IFT3225 — Phase 1 et Phase 2.
 
 ## Prérequis
 
@@ -18,11 +18,26 @@ API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur
 ## Installation et lancement
 
 ```bash
-npm install                 # installe les dépendances
+npm install                 # installe les dépendances backend
 cp .env.example .env        # puis renseignez MONGODB_URI et ADMIN_API_KEY
 npm run seed                # (optionnel) peuple la base de données de démo
-npm start                   # démarre le serveur sur http://localhost:3000
+npm start                   # démarre le serveur backend sur http://localhost:3000
 ```
+
+### Application client React (Phase 2)
+
+```bash
+cd client                   # aller dans le dossier client
+npm install                 # installe les dépendances frontend
+npm run dev                 # démarre le serveur de développement sur http://localhost:5173
+```
+
+L'application client React permet de :
+- Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance
+- Consulter les détails d'un lieu (ambiance actuelle, historique, créneaux calmes)
+- Créer un compte et se connecter
+- Soumettre des observations (authentifié)
+- Gérer ses lieux favoris
 
 `npm run seed` affiche les **clés API des devices** créés : copiez-en une pour tester les `POST` (en-tête `x-api-key`) et pour configurer le bridge.
 
@@ -34,6 +49,7 @@ npm start                   # démarre le serveur sur http://localhost:3000
 | `MONGODB_URI` | Chaîne de connexion du cluster Atlas |
 | `DB_NAME` | Nom de la base (défaut `ambiance`) |
 | `ADMIN_API_KEY` | Clé d'administration des endpoints de gestion |
+| `JWT_SECRET` | Secret pour les tokens JWT (authentification utilisateur) |
 | `RATE_LIMIT_PER_MIN` | Limite de requêtes/min (défaut 130) |
 | `MAX_PER_PAGE` | Pagination max (défaut 200) |
 
@@ -43,16 +59,24 @@ L'organisation sépare routes, modèles et middlewares (pas de mégafichier `ind
 
 ```
 rapport/
-├── index.js                 # point d'entrée : connecte la DB puis démarre Express
+├── index.js                 # point d'entrée backend : connecte la DB puis démarre Express
 ├── src/
 │   ├── app.js               # construction de l'app Express (middlewares + montage des routes)
 │   ├── config/db.js         # connexion Mongoose à MongoDB Atlas (URI via .env)
-│   ├── models/              # schémas Mongoose : Device, Location, Measurement, Observation
-│   ├── middlewares/         # auth (x-api-key), rate limit, gestion d'erreurs centralisée
-│   ├── routes/              # devices, locations, measurements, observations, ambiance
+│   ├── models/              # schémas Mongoose : Device, Location, Measurement, Observation, User
+│   ├── middlewares/         # auth (x-api-key), userAuth (JWT), rate limit, gestion d'erreurs
+│   ├── routes/              # devices, locations, measurements, observations, ambiance, auth
 │   └── utils/               # enveloppe de réponse, pagination, fenêtres temporelles, calculs d'ambiance
 ├── scripts/seed.js          # peuplement de données de démonstration
 ├── bridge/bridge.js         # collecte : Phyphox -> POST /v1/measurements
+├── client/                  # Application React (Phase 2)
+│   ├── src/
+│   │   ├── components/      # Composants React : MapView, LocationDetail, LoginForm, RegisterForm
+│   │   ├── api/             # API client : ambianceApi
+│   │   ├── App.jsx          # Composant principal
+│   │   ├── main.jsx         # Point d'entrée React
+│   │   └── App.css          # Styles globaux
+│   └── package.json         # Dépendances frontend
 └── postman/                 # collection Postman de test
 ```
 
@@ -95,10 +119,25 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | GET | `/v1/ambiance/compare` | `locations` (slugs séparés par virgule), `window?` |
 | GET | `/v1/ambiance/{slug}/history` | `last?` ou `from`/`to`, `bucket?`=`5m`\|`15m`\|`30m`\|`1h` |
 
+### Authentification utilisateur (Phase 2)
+| Méthode | Endpoint | Corps | Auth | Codes |
+|---|---|---|---|---|
+| POST | `/v1/auth/register` | `{ username, email, password }` | publique | 201, 400, 409 |
+| POST | `/v1/auth/login` | `{ username, password }` | publique | 200, 400, 401 |
+| POST | `/v1/auth/favorites` | `{ locationSlug }` | JWT token | 200, 400, 401 |
+| DELETE | `/v1/auth/favorites/{locationSlug}` | — | JWT token | 200, 401 |
+| GET | `/v1/auth/favorites` | — | JWT token | 200, 401 |
+
+### Soumission d'observations utilisateur (Phase 2)
+| Méthode | Endpoint | Corps | Auth | Codes |
+|---|---|---|---|---|
+| POST | `/v1/observations/user` | `{ locationSlug, density, proximity, vibe, notes? }` | JWT token | 201, 400, 401, 404 |
+
 **Valeurs validées** : `type=noise_level`, `unit=dB`, `value` ∈ [0,140] ; `density` ∈ {Vide, Modéré, Fréquenté, Bondé} ; `vibe` ∈ {Calme, Concentré, Sociable, Bruyante, Festive, Tendue} ; `proximity` ∈ {Isolé, Espacé, Fréquenté, Serré}. Combiner `last` avec `from`/`to` renvoie `400`.
 
-## Authentification (Tâche 5)
+## Authentification (Phase 1 et Phase 2)
 
+### Authentification device (Phase 1)
 Les endpoints d'**écriture** (`POST /measurements`, `POST /observations`, `POST /measurements/batch`) sont protégés par une clé API transmise dans l'en-tête **`x-api-key`**. Le serveur vérifie qu'elle correspond à un device enregistré :
 
 - **401** `MISSING_AUTH` — en-tête absent
@@ -107,7 +146,32 @@ Les endpoints d'**écriture** (`POST /measurements`, `POST /observations`, `POST
 
 Les requêtes de **lecture** (`GET`) restent **publiques**. Les endpoints de gestion (`DELETE /devices`, `POST`/`PUT /locations`) utilisent une **clé d'administration** (`ADMIN_API_KEY`), via le même en-tête `x-api-key`.
 
+### Authentification utilisateur (Phase 2)
+L'application client React utilise l'authentification JWT pour les utilisateurs :
+- **POST /v1/auth/register** : Création d'un compte utilisateur
+- **POST /v1/auth/login** : Connexion et obtention d'un token JWT
+- Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
+- Le token est stocké dans le localStorage du navigateur pour maintenir la session
+
 > **Note de conformité** : le rapport de conception (Tâche 2) mentionnait `Authorization: Bearer <apiKey>`. L'implémentation suit la consigne de la **Tâche 5** (`x-api-key`), qui est la version retenue pour la Phase 1.
+
+## Modifications de l'infrastructure (Phase 2)
+
+### Modèle Location
+Ajout des champs `latitude` et `longitude` pour stocker les coordonnées géographiques des lieux, nécessaires pour l'affichage sur la carte.
+
+### Modèle Observation
+Ajout du champ `author` (référence au modèle User) pour lier les observations à leur auteur, permettant de suivre les contributions des utilisateurs.
+
+### Modèle User (nouveau)
+Création du modèle User pour gérer l'authentification des utilisateurs :
+- `username` : nom d'utilisateur unique
+- `email` : email unique
+- `password` : mot de passe hashé avec bcrypt
+- `favoriteLocations` : tableau des slugs des lieux favoris
+
+### Endpoints ambiance
+Les endpoints sémantiques (`/v1/ambiance/{slug}/now`, etc.) exposent maintenant le champ `ambianceLabel` pour indiquer la classification de l'ambiance (calme, modéré, animé, inconnu).
 
 ### Faille volontaire : `POST /devices` non protégé
 

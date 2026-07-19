@@ -3,7 +3,6 @@ import MapView from './components/MapView';
 import LocationDetail from './components/LocationDetail';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
-import MyLocations from './components/MyLocations';
 import { ambianceApi } from './api/ambianceApi';
 import './App.css';
 
@@ -21,9 +20,6 @@ function App() {
   // État des favoris
   const [favorites, setFavorites] = useState([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-
-  // Vue « Mes lieux » (lieux où l'utilisateur a soumis des observations)
-  const [showMyLocations, setShowMyLocations] = useState(false);
 
   // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
@@ -73,7 +69,6 @@ function App() {
     setToken(null);
     setFavorites([]);
     setShowFavoritesOnly(false);
-    setShowMyLocations(false);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setAuthView(null);
@@ -170,37 +165,18 @@ function App() {
         </div>
         {user && (
           <div className="filter-buttons">
-            <button
-              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setShowMyLocations(false); }}
+            <button 
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
               className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
             >
               {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
-            </button>
-            <button
-              onClick={() => { setShowMyLocations(!showMyLocations); setSelectedLocation(null); }}
-              className={`filter-button ${showMyLocations ? 'active' : ''}`}
-            >
-              {showMyLocations ? 'Retour à la carte' : 'Mes lieux'}
             </button>
           </div>
         )}
       </header>
 
-      {user && showMyLocations && !selectedLocation ? (
-        <MyLocations
-          token={token}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-          onLocationSelect={(slug) => {
-            const loc = locations.find((l) => l.slug === slug);
-            if (loc) {
-              setShowMyLocations(false);
-              setSelectedLocation(loc);
-            }
-          }}
-        />
-      ) : selectedLocation ? (
-        <LocationDetail
+      {selectedLocation ? (
+        <LocationDetail 
           location={selectedLocation} 
           onBack={() => setSelectedLocation(null)} 
           user={user}

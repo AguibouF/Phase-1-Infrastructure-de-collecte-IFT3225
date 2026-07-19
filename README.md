@@ -29,8 +29,13 @@ npm start                   # démarre le serveur backend sur http://localhost:3
 ```bash
 cd client                   # aller dans le dossier client
 npm install                 # installe les dépendances frontend
+cp .env.example .env        # configure l'URL de l'API (VITE_API_URL)
 npm run dev                 # démarre le serveur de développement sur http://localhost:5173
 ```
+
+La couche client (`client/src/api/ambianceApi.js`) lit l'URL de l'API dans la variable
+`VITE_API_URL` (fichier `client/.env`, voir `client/.env.example`). Par défaut :
+`http://localhost:3000/v1`.
 
 L'application client React permet de :
 - Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance

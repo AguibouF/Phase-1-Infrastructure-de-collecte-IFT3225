@@ -131,10 +131,13 @@ function App() {
           <h1>Ambiance des Lieux</h1>
           <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
         </header>
-        <LoginForm 
-          onLogin={handleLogin} 
-          onSwitchToRegister={() => setAuthView('register')} 
+        <LoginForm
+          onLogin={handleLogin}
+          onSwitchToRegister={() => setAuthView('register')}
         />
+        <div className="auth-back">
+          <button onClick={() => setAuthView(null)} className="back-button">← Retour à la carte</button>
+        </div>
       </div>
     );
   }
@@ -146,10 +149,13 @@ function App() {
           <h1>Ambiance des Lieux</h1>
           <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
         </header>
-        <RegisterForm 
-          onRegister={handleRegister} 
-          onSwitchToLogin={() => setAuthView('login')} 
+        <RegisterForm
+          onRegister={handleRegister}
+          onSwitchToLogin={() => setAuthView('login')}
         />
+        <div className="auth-back">
+          <button onClick={() => setAuthView(null)} className="back-button">← Retour à la carte</button>
+        </div>
       </div>
     );
   }

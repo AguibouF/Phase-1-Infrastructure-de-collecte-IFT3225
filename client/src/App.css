@@ -346,6 +346,16 @@
 
 /* ---------- Formulaires d'authentification ---------- */
 
+.auth-back {
+  max-width: 400px;
+  margin: -20px auto 40px;
+  text-align: center;
+}
+
+.auth-back .back-button {
+  margin-bottom: 0;
+}
+
 .auth-form {
   max-width: 400px;
   margin: 40px auto;

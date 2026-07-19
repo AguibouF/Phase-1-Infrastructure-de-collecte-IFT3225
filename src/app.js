@@ -11,6 +11,7 @@ const locations = require('./routes/locations');
 const measurements = require('./routes/measurements');
 const observations = require('./routes/observations');
 const ambiance = require('./routes/ambiance');
+const auth = require('./routes/auth');
 
 function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ function createApp() {
   app.use('/v1/measurements', measurements);
   app.use('/v1/observations', observations);
   app.use('/v1/ambiance', ambiance);
+  app.use('/v1/auth', auth);
 
   // 400 si JSON malformé (capté avant le 404)
   app.use((err, _req, res, next) => {

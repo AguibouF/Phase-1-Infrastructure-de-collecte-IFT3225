@@ -29,11 +29,8 @@ npm start                   # démarre le serveur backend sur http://localhost:3
 ```bash
 cd client                   # aller dans le dossier client
 npm install                 # installe les dépendances frontend
-cp .env.example .env        # configure l'URL de l'API (VITE_API_URL)
 npm run dev                 # démarre le serveur de développement sur http://localhost:5173
 ```
-
-L'URL de l'API de la phase 1 se configure dans `client/.env` via la variable `VITE_API_URL` (défaut : `http://localhost:3000/v1`).
 
 L'application client React permet de :
 - Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance
@@ -41,7 +38,6 @@ L'application client React permet de :
 - Créer un compte et se connecter
 - Soumettre des observations (authentifié)
 - Gérer ses lieux favoris
-- Consulter son espace compte (identité, récapitulatif des contributions, ses lieux, favoris, déconnexion)
 
 `npm run seed` affiche les **clés API des devices** créés : copiez-en une pour tester les `POST` (en-tête `x-api-key`) et pour configurer le bridge.
 
@@ -99,8 +95,8 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | Méthode | Endpoint | Corps / params | Auth | Codes |
 |---|---|---|---|---|
 | GET | `/v1/locations` | `city?, type?, page?, perPage?` | publique | 200 |
-| POST | `/v1/locations` | `{ slug, displayName, city, type, latitude?, longitude? }` | `x-api-key` admin | 201, 400, 401, 403, 409 |
-| PUT | `/v1/locations/{slug}` | `{ displayName?, city?, type?, latitude?, longitude? }` | `x-api-key` admin | 200, 400, 401, 403, 404 |
+| POST | `/v1/locations` | `{ slug, displayName, city, type }` | `x-api-key` admin | 201, 400, 401, 403, 409 |
+| PUT | `/v1/locations/{slug}` | `{ displayName?, city?, type? }` | `x-api-key` admin | 200, 400, 401, 403, 404 |
 
 ### Collecte (écriture, protégée par `x-api-key` device)
 | Méthode | Endpoint | Corps | Codes |
@@ -136,7 +132,6 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | Méthode | Endpoint | Corps | Auth | Codes |
 |---|---|---|---|---|
 | POST | `/v1/observations/user` | `{ locationSlug, density, proximity, vibe, notes? }` | JWT token | 201, 400, 401, 404 |
-| GET | `/v1/observations/user` | — | JWT token | 200, 401 |
 
 **Valeurs validées** : `type=noise_level`, `unit=dB`, `value` ∈ [0,140] ; `density` ∈ {Vide, Modéré, Fréquenté, Bondé} ; `vibe` ∈ {Calme, Concentré, Sociable, Bruyante, Festive, Tendue} ; `proximity` ∈ {Isolé, Espacé, Fréquenté, Serré}. Combiner `last` avec `from`/`to` renvoie `400`.
 
@@ -158,15 +153,6 @@ L'application client React utilise l'authentification JWT pour les utilisateurs 
 - Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
 - Le token est stocké dans le localStorage du navigateur pour maintenir la session
 
-### Comment se connecter et tester les actions protégées
-
-1. Lancer le backend (`npm start`) puis le client (`cd client && npm run dev`).
-2. Dans l'application, cliquer sur **Connexion**, puis **S'inscrire** pour créer un compte (nom d'utilisateur, email, mot de passe d'au moins 6 caractères).
-3. Une fois connecté, l'en-tête affiche le nom de l'usager ainsi que les boutons **Mon compte** et **Déconnexion**.
-4. Ouvrir un lieu depuis la carte : le bouton **Ajouter aux favoris** et le formulaire **Nouvelle observation** deviennent visibles (ils sont masqués pour un visiteur non connecté).
-5. Soumettre une observation, puis ouvrir **Mon compte** pour vérifier le récapitulatif des contributions et la liste de ses lieux.
-6. Pour tester côté API : `POST /v1/auth/login` renvoie un token JWT à passer dans l'en-tête `Authorization: Bearer <token>` sur les écritures (`POST /v1/observations/user`, favoris). Sans token, ces endpoints renvoient **401** ; les lectures restent publiques.
-
 > **Note de conformité** : le rapport de conception (Tâche 2) mentionnait `Authorization: Bearer <apiKey>`. L'implémentation suit la consigne de la **Tâche 5** (`x-api-key`), qui est la version retenue pour la Phase 1.
 
 ## Modifications de l'infrastructure (Phase 2)
@@ -175,7 +161,7 @@ L'application client React utilise l'authentification JWT pour les utilisateurs 
 Ajout des champs `latitude` et `longitude` pour stocker les coordonnées géographiques des lieux, nécessaires pour l'affichage sur la carte.
 
 ### Modèle Observation
-Ajout du champ `author` (référence au modèle User) pour lier les observations à leur auteur, permettant de suivre les contributions des utilisateurs. L'endpoint `GET /v1/observations/user` (protégé par JWT) permet de retrouver les observations de l'usager connecté.
+Ajout du champ `author` (référence au modèle User) pour lier les observations à leur auteur, permettant de suivre les contributions des utilisateurs.
 
 ### Modèle User (nouveau)
 Création du modèle User pour gérer l'authentification des utilisateurs :

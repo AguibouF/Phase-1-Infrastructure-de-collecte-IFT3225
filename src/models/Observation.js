@@ -14,6 +14,7 @@ const observationSchema = new mongoose.Schema(
     notes: { type: String, default: '', trim: true, maxlength: 500 },
     timestamp: { type: Date, required: true },
     receivedAt: { type: Date, default: Date.now },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   },
   { timestamps: false }
 );

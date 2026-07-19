@@ -74,6 +74,7 @@ function App() {
     setFavorites([]);
     setShowFavoritesOnly(false);
     setShowMyLocations(false);
+    setSelectedLocation(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setAuthView(null);

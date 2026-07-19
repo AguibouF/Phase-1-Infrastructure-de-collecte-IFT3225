@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -48,10 +49,51 @@
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
+=======
+/* Base et jetons de design de l'application (Phase 2). */
+:root {
+  /* Couleurs neutres */
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --border: #e4e8ef;
+  --ink: #1c2733;
+  --ink-soft: #5b6774;
+  --ink-faint: #8a94a1;
+
+  /* Accent */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eaf1fe;
+
+  /* Couleurs sémantiques de l'ambiance (identiques à la carte) */
+  --calme: #27ae60;
+  --modere: #f39c12;
+  --anime: #e74c3c;
+  --bruyant: #8e44ad;
+  --inconnu: #7f8c8d;
+
+  /* Rayons et ombres */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
+
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  color-scheme: light;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+>>>>>>> aguibou_phase2
 }
 
 body {
   margin: 0;
+<<<<<<< HEAD
 }
 
 #root {
@@ -91,10 +133,23 @@ h2 {
     font-size: 20px;
   }
 }
+=======
+  background: var(--bg);
+}
+
+h1, h2, h3, h4 {
+  color: var(--ink);
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 0;
+}
+
+>>>>>>> aguibou_phase2
 p {
   margin: 0;
 }
 
+<<<<<<< HEAD
 code,
 .counter {
   font-family: var(--mono);
@@ -108,4 +163,8 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+=======
+button {
+  font-family: inherit;
+>>>>>>> aguibou_phase2
 }

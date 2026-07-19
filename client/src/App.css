@@ -4,6 +4,7 @@
   box-sizing: border-box;
 }
 
+<<<<<<< HEAD
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f5f5f5;
@@ -51,11 +52,63 @@ body {
 
 .login-button:hover {
   background: #2980b9;
+=======
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+/* ---------- En-tête ---------- */
+
+.app-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 28px 24px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.app-header h1 {
+  font-size: 26px;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
+}
+
+.app-header p {
+  color: var(--ink-soft);
+  font-size: 14.5px;
+}
+
+.auth-buttons {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-button {
+  padding: 9px 22px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 550;
+  transition: background 0.2s;
+}
+
+.login-button:hover {
+  background: var(--accent-hover);
+>>>>>>> aguibou_phase2
 }
 
 .user-info {
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   gap: 15px;
 }
 
@@ -262,17 +315,222 @@ body {
 .quiet-hours-section h2 {
   color: #2c3e50;
   margin-bottom: 15px;
+=======
+  gap: 14px;
+}
+
+.user-info span {
+  color: var(--ink);
+  font-weight: 550;
+  font-size: 14.5px;
+}
+
+.logout-button {
+  padding: 7px 16px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13.5px;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  color: var(--anime);
+  border-color: var(--anime);
+  background: #fdf1f0;
+}
+
+.filter-buttons {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-button {
+  padding: 7px 18px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.filter-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.filter-button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.filter-button.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ---------- Sections génériques ---------- */
+
+.map-section,
+.location-detail {
+  background: var(--surface);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.map-section h2 {
+  margin-bottom: 16px;
+  font-size: 19px;
+}
+
+.loading,
+.error,
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 15.5px;
+  color: var(--ink-soft);
+}
+
+.error {
+  color: var(--anime);
+}
+
+/* ---------- Vue détaillée ---------- */
+
+.back-button {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.location-header {
+  margin-bottom: 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.location-header h1 {
+  font-size: 24px;
+  letter-spacing: -0.3px;
+  margin-bottom: 3px;
+}
+
+.location-meta {
+  color: var(--ink-faint);
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.ambiance-section,
+.history-section,
+.quiet-hours-section,
+.observation-section {
+  margin-top: 22px;
+  padding: 20px;
+  background: var(--surface-soft);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.ambiance-section h2,
+.history-section h2,
+.quiet-hours-section h2,
+.observation-section h2 {
+  font-size: 16px;
+  margin-bottom: 14px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.ambiance-badge {
+  margin: 4px 0 6px;
+}
+
+.ambiance-metadata,
+.quiet-hours-metadata {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.ambiance-metadata p,
+.quiet-hours-metadata p {
+  margin: 0;
+}
+
+/* ---------- Badges de classification ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 15px;
+  color: white;
+}
+
+.badge.calme { background: var(--calme); }
+.badge.modéré { background: var(--modere); }
+.badge.animé { background: var(--anime); }
+.badge.bruyant { background: var(--bruyant); }
+.badge.inconnu,
+.badge.default { background: var(--inconnu); }
+
+/* ---------- Graphe et créneaux calmes ---------- */
+
+.chart-container {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+>>>>>>> aguibou_phase2
 }
 
 .quiet-hours-list {
   display: flex;
   flex-direction: column;
+<<<<<<< HEAD
   gap: 10px;
+=======
+  gap: 8px;
+>>>>>>> aguibou_phase2
 }
 
 .quiet-hour-item {
   display: flex;
   justify-content: space-between;
+<<<<<<< HEAD
   padding: 10px 15px;
   background: white;
   border-radius: 4px;
@@ -316,11 +574,72 @@ body {
 .map-legend h4 {
   margin: 0 0 10px 0;
   color: #2c3e50;
+=======
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.quiet-hour-day {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quiet-hour-range {
+  color: var(--ink-soft);
+}
+
+.quiet-hour-noise {
+  font-weight: 600;
+  color: var(--calme);
+  font-variant-numeric: tabular-nums;
+}
+
+.no-data {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ---------- Carte et légende ---------- */
+
+.map-container {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.map-container .leaflet-container {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.map-legend {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.map-legend h4 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+>>>>>>> aguibou_phase2
 }
 
 .legend-item {
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   margin: 8px 0;
 }
 
@@ -345,36 +664,94 @@ body {
 .auth-form h2 {
   color: #2c3e50;
   margin-bottom: 20px;
+=======
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 7px;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Formulaires d'authentification ---------- */
+
+.auth-form {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 32px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.auth-form h2 {
+  font-size: 20px;
+  margin-bottom: 22px;
+>>>>>>> aguibou_phase2
   text-align: center;
 }
 
 .form-group {
+<<<<<<< HEAD
   margin-bottom: 20px;
+=======
+  margin-bottom: 16px;
+>>>>>>> aguibou_phase2
 }
 
 .form-group label {
   display: block;
+<<<<<<< HEAD
   margin-bottom: 8px;
   color: #2c3e50;
   font-weight: 500;
+=======
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-weight: 550;
+  font-size: 13.5px;
+>>>>>>> aguibou_phase2
 }
 
 .form-group input {
   width: 100%;
+<<<<<<< HEAD
   padding: 12px;
   border: 1px solid #dee2e6;
   border-radius: 4px;
   font-size: 16px;
   transition: border-color 0.3s;
+=======
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+>>>>>>> aguibou_phase2
 }
 
 .form-group input:focus {
   outline: none;
+<<<<<<< HEAD
   border-color: #3498db;
+=======
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+>>>>>>> aguibou_phase2
 }
 
 .auth-form button[type="submit"] {
   width: 100%;
+<<<<<<< HEAD
   padding: 12px;
   background: #3498db;
   color: white;
@@ -391,25 +768,57 @@ body {
 
 .auth-form button[type="submit"]:disabled {
   background: #95a5a6;
+=======
+  padding: 11px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-form button[type="submit"]:hover {
+  background: var(--accent-hover);
+}
+
+.auth-form button[type="submit"]:disabled {
+  background: var(--ink-faint);
+>>>>>>> aguibou_phase2
   cursor: not-allowed;
 }
 
 .auth-switch {
   text-align: center;
+<<<<<<< HEAD
   margin-top: 20px;
   color: #666;
+=======
+  margin-top: 18px;
+  color: var(--ink-soft);
+  font-size: 14px;
+>>>>>>> aguibou_phase2
 }
 
 .auth-switch button {
   background: none;
   border: none;
+<<<<<<< HEAD
   color: #3498db;
   cursor: pointer;
   font-size: 16px;
+=======
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+>>>>>>> aguibou_phase2
   text-decoration: underline;
 }
 
 .auth-switch button:hover {
+<<<<<<< HEAD
   color: #2980b9;
 }
 
@@ -468,34 +877,109 @@ body {
 
 .observation-form .form-group {
   margin-bottom: 15px;
+=======
+  color: var(--accent-hover);
+}
+
+.error-message {
+  background: #fdf1f0;
+  color: #b03a2e;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border: 1px solid #f5c6c0;
+  font-size: 14px;
+}
+
+.success-message {
+  background: #edf9f1;
+  color: #1e8449;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border: 1px solid #c8ecd4;
+  font-size: 14px;
+}
+
+/* ---------- Formulaire d'observation ---------- */
+
+.add-observation-button {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 550;
+  transition: background 0.2s;
+}
+
+.add-observation-button:hover {
+  background: var(--accent-hover);
+}
+
+.observation-form {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.observation-form .form-group {
+  margin-bottom: 14px;
+>>>>>>> aguibou_phase2
 }
 
 .observation-form label {
   display: block;
+<<<<<<< HEAD
   margin-bottom: 8px;
   color: #2c3e50;
   font-weight: 500;
+=======
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-weight: 550;
+  font-size: 13.5px;
+>>>>>>> aguibou_phase2
 }
 
 .observation-form select,
 .observation-form textarea {
   width: 100%;
+<<<<<<< HEAD
   padding: 10px;
   border: 1px solid #dee2e6;
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
+=======
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14.5px;
+  font-family: inherit;
+  background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+>>>>>>> aguibou_phase2
 }
 
 .observation-form select:focus,
 .observation-form textarea:focus {
   outline: none;
+<<<<<<< HEAD
   border-color: #3498db;
+=======
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+>>>>>>> aguibou_phase2
 }
 
 .form-buttons {
   display: flex;
   gap: 10px;
+<<<<<<< HEAD
   margin-top: 20px;
 }
 
@@ -555,4 +1039,193 @@ body {
 .favorite-button.active:hover {
   background: #e67e22;
   border-color: #e67e22;
+=======
+  margin-top: 18px;
+}
+
+.submit-button {
+  padding: 9px 22px;
+  background: var(--calme);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14.5px;
+  font-weight: 550;
+  transition: filter 0.2s;
+}
+
+.submit-button:hover {
+  filter: brightness(0.92);
+}
+
+.cancel-button {
+  padding: 9px 22px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14.5px;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+/* ---------- Bouton favori (vue détaillée) ---------- */
+
+.favorite-button {
+  margin-top: 14px;
+  padding: 8px 18px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14.5px;
+  transition: all 0.2s;
+}
+
+.favorite-button:hover {
+  border-color: var(--modere);
+  color: var(--modere);
+}
+
+.favorite-button.active {
+  background: #fdf6e8;
+  color: #b9770e;
+  border-color: var(--modere);
+}
+
+.favorite-button.active:hover {
+  filter: brightness(0.97);
+}
+
+/* ---------- Vue « Mes lieux » ---------- */
+
+.my-locations-section {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--surface);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.my-locations-section h2 {
+  font-size: 19px;
+  margin-bottom: 4px;
+}
+
+.my-locations-intro {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.empty-state {
+  background: var(--surface-soft);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 36px 24px;
+  color: var(--ink-soft);
+}
+
+.my-locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-location-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.my-location-card:hover {
+  border-color: #c9d4e4;
+  box-shadow: var(--shadow);
+}
+
+.my-location-info h3 {
+  font-size: 15.5px;
+  margin-bottom: 2px;
+}
+
+.my-location-meta {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.my-location-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.favorite-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.favorite-toggle:hover,
+.favorite-toggle.active {
+  color: var(--modere);
+}
+
+.detail-button {
+  padding: 7px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.detail-button:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .app {
+    padding: 16px 12px 32px;
+  }
+
+  .map-section,
+  .location-detail,
+  .my-locations-section {
+    padding: 16px;
+  }
+
+  .quiet-hour-item {
+    flex-wrap: wrap;
+  }
+
+  .my-location-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+>>>>>>> aguibou_phase2
 }

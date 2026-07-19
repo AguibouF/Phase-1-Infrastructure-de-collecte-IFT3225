@@ -81,4 +81,17 @@ export const ambianceApi = {
     });
     return response.data;
   },
+<<<<<<< HEAD
+=======
+
+  // Récupérer les lieux où l'utilisateur a effectué des écoutes
+  getMyLocations: async (token) => {
+    const response = await axios.get(`${API_BASE_URL}/auth/my-locations`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  },
+>>>>>>> aguibou_phase2
 };

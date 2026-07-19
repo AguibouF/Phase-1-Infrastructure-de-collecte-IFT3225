@@ -3,6 +3,10 @@ import MapView from './components/MapView';
 import LocationDetail from './components/LocationDetail';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+<<<<<<< HEAD
+=======
+import MyLocations from './components/MyLocations';
+>>>>>>> aguibou_phase2
 import { ambianceApi } from './api/ambianceApi';
 import './App.css';
 
@@ -21,6 +25,12 @@ function App() {
   const [favorites, setFavorites] = useState([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
+<<<<<<< HEAD
+=======
+  // Vue « Mes lieux » (lieux où l'utilisateur a soumis des observations)
+  const [showMyLocations, setShowMyLocations] = useState(false);
+
+>>>>>>> aguibou_phase2
   // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -69,6 +79,10 @@ function App() {
     setToken(null);
     setFavorites([]);
     setShowFavoritesOnly(false);
+<<<<<<< HEAD
+=======
+    setShowMyLocations(false);
+>>>>>>> aguibou_phase2
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setAuthView(null);
@@ -165,18 +179,50 @@ function App() {
         </div>
         {user && (
           <div className="filter-buttons">
+<<<<<<< HEAD
             <button 
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+=======
+            <button
+              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setShowMyLocations(false); }}
+>>>>>>> aguibou_phase2
               className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
             >
               {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
             </button>
+<<<<<<< HEAD
+=======
+            <button
+              onClick={() => { setShowMyLocations(!showMyLocations); setSelectedLocation(null); }}
+              className={`filter-button ${showMyLocations ? 'active' : ''}`}
+            >
+              {showMyLocations ? 'Retour à la carte' : 'Mes lieux'}
+            </button>
+>>>>>>> aguibou_phase2
           </div>
         )}
       </header>
 
+<<<<<<< HEAD
       {selectedLocation ? (
         <LocationDetail 
+=======
+      {user && showMyLocations && !selectedLocation ? (
+        <MyLocations
+          token={token}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
+          onLocationSelect={(slug) => {
+            const loc = locations.find((l) => l.slug === slug);
+            if (loc) {
+              setShowMyLocations(false);
+              setSelectedLocation(loc);
+            }
+          }}
+        />
+      ) : selectedLocation ? (
+        <LocationDetail
+>>>>>>> aguibou_phase2
           location={selectedLocation} 
           onBack={() => setSelectedLocation(null)} 
           user={user}

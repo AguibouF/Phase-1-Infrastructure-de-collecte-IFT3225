@@ -132,6 +132,9 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | POST | `/v1/auth/favorites` | `{ locationSlug }` | JWT token | 200, 400, 401 |
 | DELETE | `/v1/auth/favorites/{locationSlug}` | — | JWT token | 200, 401 |
 | GET | `/v1/auth/favorites` | — | JWT token | 200, 401 |
+| GET | `/v1/auth/my-locations` | — | JWT token | 200, 401 |
+
+`GET /v1/auth/my-locations` renvoie le récapitulatif des lieux où l'utilisateur connecté a soumis des observations (« ses lieux ») : nom, type, coordonnées, nombre d'observations, date de la dernière écoute et statut favori, triés de la plus récente à la plus ancienne.
 
 ### Soumission d'observations utilisateur (Phase 2)
 | Méthode | Endpoint | Corps | Auth | Codes |
@@ -155,7 +158,7 @@ Les requêtes de **lecture** (`GET`) restent **publiques**. Les endpoints de ges
 L'application client React utilise l'authentification JWT pour les utilisateurs :
 - **POST /v1/auth/register** : Création d'un compte utilisateur
 - **POST /v1/auth/login** : Connexion et obtention d'un token JWT
-- Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
+- Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/auth/my-locations`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
 - Le token est stocké dans le localStorage du navigateur pour maintenir la session
 
 > **Note de conformité** : le rapport de conception (Tâche 2) mentionnait `Authorization: Bearer <apiKey>`. L'implémentation suit la consigne de la **Tâche 5** (`x-api-key`), qui est la version retenue pour la Phase 1.

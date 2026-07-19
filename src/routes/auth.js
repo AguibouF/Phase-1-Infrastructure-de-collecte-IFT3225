@@ -1,6 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Observation = require('../models/Observation');
+const Location = require('../models/Location');
 const { success, errors } = require('../utils/responses');
 const { userAuth } = require('../middlewares/userAuth');
 
@@ -159,6 +162,54 @@ router.get('/favorites', userAuth, async (req, res, next) => {
 
     success(res, 200, {
       favoriteLocations: user.favoriteLocations
+    });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/auth/my-locations - Récapitulatif des lieux où l'utilisateur a effectué des écoutes
+router.get('/my-locations', userAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      throw errors.notFound('USER_NOT_FOUND', 'Utilisateur non trouvé');
+    }
+
+    // Regrouper les observations de l'utilisateur par lieu
+    const summary = await Observation.aggregate([
+      { $match: { author: new mongoose.Types.ObjectId(req.user.userId) } },
+      {
+        $group: {
+          _id: '$locationSlug',
+          observationCount: { $sum: 1 },
+          lastObservationAt: { $max: '$timestamp' },
+        },
+      },
+      { $sort: { lastObservationAt: -1 } },
+    ]);
+
+    // Enrichir avec les informations du lieu (nom, type, coordonnées)
+    const slugs = summary.map((s) => s._id);
+    const locations = await Location.find({ slug: { $in: slugs } });
+    const locationsBySlug = {};
+    for (const loc of locations) locationsBySlug[loc.slug] = loc;
+
+    const myLocations = summary.map((s) => {
+      const loc = locationsBySlug[s._id];
+      return {
+        locationSlug: s._id,
+        displayName: loc ? loc.displayName : s._id,
+        type: loc ? loc.type : null,
+        city: loc ? loc.city : null,
+        latitude: loc ? loc.latitude : null,
+        longitude: loc ? loc.longitude : null,
+        observationCount: s.observationCount,
+        lastObservationAt: s.lastObservationAt,
+        isFavorite: user.favoriteLocations.includes(s._id),
+      };
+    });
+
+    success(res, 200, { myLocations }, {
+      description: 'Lieux où l\'utilisateur connecté a soumis des observations, avec nombre d\'écoutes et date de la dernière.',
     });
   } catch (e) { next(e); }
 });

@@ -1,13 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-<<<<<<< HEAD
-const User = require('../models/User');
-=======
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Observation = require('../models/Observation');
 const Location = require('../models/Location');
->>>>>>> aguibou_phase2
 const { success, errors } = require('../utils/responses');
 const { userAuth } = require('../middlewares/userAuth');
 
@@ -170,8 +166,6 @@ router.get('/favorites', userAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-<<<<<<< HEAD
-=======
 // GET /v1/auth/my-locations - Récapitulatif des lieux où l'utilisateur a effectué des écoutes
 router.get('/my-locations', userAuth, async (req, res, next) => {
   try {
@@ -220,5 +214,4 @@ router.get('/my-locations', userAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
->>>>>>> aguibou_phase2
 module.exports = router;

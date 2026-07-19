@@ -81,8 +81,6 @@ export const ambianceApi = {
     });
     return response.data;
   },
-<<<<<<< HEAD
-=======
 
   // Récupérer les lieux où l'utilisateur a effectué des écoutes
   getMyLocations: async (token) => {
@@ -93,5 +91,4 @@ export const ambianceApi = {
     });
     return response.data;
   },
->>>>>>> aguibou_phase2
 };

@@ -4,55 +4,6 @@
   box-sizing: border-box;
 }
 
-<<<<<<< HEAD
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.app-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.app-header h1 {
-  color: #2c3e50;
-  margin-bottom: 10px;
-}
-
-.app-header p {
-  color: #7f8c8d;
-}
-
-.auth-buttons {
-  margin-top: 15px;
-}
-
-.login-button {
-  padding: 10px 20px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-}
-
-.login-button:hover {
-  background: #2980b9;
-=======
 .app {
   max-width: 1100px;
   margin: 0 auto;
@@ -102,220 +53,11 @@ body {
 
 .login-button:hover {
   background: var(--accent-hover);
->>>>>>> aguibou_phase2
 }
 
 .user-info {
   display: flex;
   align-items: center;
-<<<<<<< HEAD
-  gap: 15px;
-}
-
-.user-info span {
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.logout-button {
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.3s;
-}
-
-.logout-button:hover {
-  background: #c0392b;
-}
-
-.filter-buttons {
-  margin-top: 15px;
-}
-
-.filter-button {
-  padding: 8px 16px;
-  background: #f8f9fa;
-  color: #2c3e50;
-  border: 2px solid #dee2e6;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.filter-button:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-}
-
-.filter-button.active {
-  background: #3498db;
-  color: white;
-  border-color: #3498db;
-}
-
-.filter-button.active:hover {
-  background: #2980b9;
-  border-color: #2980b9;
-}
-
-.map-section {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.map-section h2 {
-  margin-bottom: 15px;
-  color: #2c3e50;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 40px;
-  font-size: 18px;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.location-detail {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.back-button {
-  padding: 10px 20px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  font-size: 16px;
-}
-
-.back-button:hover {
-  background: #2980b9;
-}
-
-.location-header {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.location-header h1 {
-  color: #2c3e50;
-  margin-bottom: 5px;
-}
-
-.location-meta {
-  color: #7f8c8d;
-}
-
-.ambiance-badge {
-  margin: 20px 0;
-}
-
-.ambiance-section {
-  margin: 30px 0;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.ambiance-section h2 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-}
-
-.ambiance-metadata {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #dee2e6;
-  font-size: 14px;
-  color: #666;
-}
-
-.ambiance-metadata p {
-  margin: 5px 0;
-}
-
-.badge {
-  display: inline-block;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.badge.calme {
-  background: #27ae60;
-  color: white;
-}
-
-.badge.modéré {
-  background: #f39c12;
-  color: white;
-}
-
-.badge.animé {
-  background: #e74c3c;
-  color: white;
-}
-
-.badge.bruyant {
-  background: #8e44ad;
-  color: white;
-}
-
-.badge.default {
-  background: #7f8c8d;
-  color: white;
-}
-
-.history-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.history-section h2 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-}
-
-.chart-container {
-  background: white;
-  padding: 15px;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-}
-
-.quiet-hours-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.quiet-hours-section h2 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-=======
   gap: 14px;
 }
 
@@ -514,67 +256,17 @@ body {
   padding: 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
->>>>>>> aguibou_phase2
 }
 
 .quiet-hours-list {
   display: flex;
   flex-direction: column;
-<<<<<<< HEAD
-  gap: 10px;
-=======
   gap: 8px;
->>>>>>> aguibou_phase2
 }
 
 .quiet-hour-item {
   display: flex;
   justify-content: space-between;
-<<<<<<< HEAD
-  padding: 10px 15px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-}
-
-.quiet-hour-day {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.quiet-hour-range {
-  color: #666;
-}
-
-.quiet-hours-metadata {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #dee2e6;
-  font-size: 14px;
-  color: #666;
-}
-
-.quiet-hours-metadata p {
-  margin: 5px 0;
-}
-
-.no-data {
-  color: #7f8c8d;
-  font-style: italic;
-}
-
-.map-legend {
-  margin-top: 15px;
-  padding: 15px;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.map-legend h4 {
-  margin: 0 0 10px 0;
-  color: #2c3e50;
-=======
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
@@ -633,38 +325,11 @@ body {
   color: var(--ink-soft);
   text-transform: uppercase;
   letter-spacing: 0.6px;
->>>>>>> aguibou_phase2
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-<<<<<<< HEAD
-  margin: 8px 0;
-}
-
-.legend-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin-right: 10px;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.auth-form {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 30px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.auth-form h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
-=======
   margin: 0;
   font-size: 13.5px;
   color: var(--ink-soft);
@@ -694,41 +359,23 @@ body {
 .auth-form h2 {
   font-size: 20px;
   margin-bottom: 22px;
->>>>>>> aguibou_phase2
   text-align: center;
 }
 
 .form-group {
-<<<<<<< HEAD
-  margin-bottom: 20px;
-=======
   margin-bottom: 16px;
->>>>>>> aguibou_phase2
 }
 
 .form-group label {
   display: block;
-<<<<<<< HEAD
-  margin-bottom: 8px;
-  color: #2c3e50;
-  font-weight: 500;
-=======
   margin-bottom: 6px;
   color: var(--ink-soft);
   font-weight: 550;
   font-size: 13.5px;
->>>>>>> aguibou_phase2
 }
 
 .form-group input {
   width: 100%;
-<<<<<<< HEAD
-  padding: 12px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 16px;
-  transition: border-color 0.3s;
-=======
   padding: 11px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -736,39 +383,16 @@ body {
   font-family: inherit;
   background: var(--surface);
   transition: border-color 0.2s, box-shadow 0.2s;
->>>>>>> aguibou_phase2
 }
 
 .form-group input:focus {
   outline: none;
-<<<<<<< HEAD
-  border-color: #3498db;
-=======
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
->>>>>>> aguibou_phase2
 }
 
 .auth-form button[type="submit"] {
   width: 100%;
-<<<<<<< HEAD
-  padding: 12px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.auth-form button[type="submit"]:hover {
-  background: #2980b9;
-}
-
-.auth-form button[type="submit"]:disabled {
-  background: #95a5a6;
-=======
   padding: 11px;
   background: var(--accent);
   color: white;
@@ -786,98 +410,26 @@ body {
 
 .auth-form button[type="submit"]:disabled {
   background: var(--ink-faint);
->>>>>>> aguibou_phase2
   cursor: not-allowed;
 }
 
 .auth-switch {
   text-align: center;
-<<<<<<< HEAD
-  margin-top: 20px;
-  color: #666;
-=======
   margin-top: 18px;
   color: var(--ink-soft);
   font-size: 14px;
->>>>>>> aguibou_phase2
 }
 
 .auth-switch button {
   background: none;
   border: none;
-<<<<<<< HEAD
-  color: #3498db;
-  cursor: pointer;
-  font-size: 16px;
-=======
   color: var(--accent);
   cursor: pointer;
   font-size: 14px;
->>>>>>> aguibou_phase2
   text-decoration: underline;
 }
 
 .auth-switch button:hover {
-<<<<<<< HEAD
-  color: #2980b9;
-}
-
-.error-message {
-  background: #fee;
-  color: #c0392b;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border: 1px solid #fcc;
-}
-
-.success-message {
-  background: #efe;
-  color: #27ae60;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border: 1px solid #cfc;
-}
-
-.observation-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.observation-section h2 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-}
-
-.add-observation-button {
-  padding: 12px 20px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-}
-
-.add-observation-button:hover {
-  background: #2980b9;
-}
-
-.observation-form {
-  background: white;
-  padding: 20px;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-}
-
-.observation-form .form-group {
-  margin-bottom: 15px;
-=======
   color: var(--accent-hover);
 }
 
@@ -928,33 +480,19 @@ body {
 
 .observation-form .form-group {
   margin-bottom: 14px;
->>>>>>> aguibou_phase2
 }
 
 .observation-form label {
   display: block;
-<<<<<<< HEAD
-  margin-bottom: 8px;
-  color: #2c3e50;
-  font-weight: 500;
-=======
   margin-bottom: 6px;
   color: var(--ink-soft);
   font-weight: 550;
   font-size: 13.5px;
->>>>>>> aguibou_phase2
 }
 
 .observation-form select,
 .observation-form textarea {
   width: 100%;
-<<<<<<< HEAD
-  padding: 10px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: inherit;
-=======
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -962,84 +500,18 @@ body {
   font-family: inherit;
   background: var(--surface);
   transition: border-color 0.2s, box-shadow 0.2s;
->>>>>>> aguibou_phase2
 }
 
 .observation-form select:focus,
 .observation-form textarea:focus {
   outline: none;
-<<<<<<< HEAD
-  border-color: #3498db;
-=======
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
->>>>>>> aguibou_phase2
 }
 
 .form-buttons {
   display: flex;
   gap: 10px;
-<<<<<<< HEAD
-  margin-top: 20px;
-}
-
-.submit-button {
-  padding: 10px 20px;
-  background: #27ae60;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-}
-
-.submit-button:hover {
-  background: #229954;
-}
-
-.cancel-button {
-  padding: 10px 20px;
-  background: #95a5a6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s;
-}
-
-.cancel-button:hover {
-  background: #7f8c8d;
-}
-
-.favorite-button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: #f8f9fa;
-  color: #2c3e50;
-  border: 2px solid #dee2e6;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s;
-}
-
-.favorite-button:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-}
-
-.favorite-button.active {
-  background: #f39c12;
-  color: white;
-  border-color: #f39c12;
-}
-
-.favorite-button.active:hover {
-  background: #e67e22;
-  border-color: #e67e22;
-=======
   margin-top: 18px;
 }
 
@@ -1227,5 +699,4 @@ body {
     flex-direction: column;
     align-items: flex-start;
   }
->>>>>>> aguibou_phase2
 }

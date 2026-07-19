@@ -221,6 +221,11 @@ body {
   color: white;
 }
 
+.badge.bruyant {
+  background: #8e44ad;
+  color: white;
+}
+
 .badge.default {
   background: #7f8c8d;
   color: white;

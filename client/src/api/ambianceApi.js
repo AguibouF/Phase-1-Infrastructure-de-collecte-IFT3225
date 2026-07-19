@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/v1';
+// URL de l'API configurable via client/.env (VITE_API_URL) — voir .env.example
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 
 export const ambianceApi = {
   // Récupérer tous les lieux

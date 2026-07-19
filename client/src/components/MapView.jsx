@@ -61,6 +61,8 @@ const MapView = ({ locations, onLocationClick }) => {
         return '#f39c12'; // Orange
       case 'animé':
         return '#e74c3c'; // Rouge
+      case 'bruyant':
+        return '#8e44ad'; // Violet
       case 'inconnu':
         return '#7f8c8d'; // Gris
       default:
@@ -139,6 +141,10 @@ const MapView = ({ locations, onLocationClick }) => {
         <div className="legend-item">
           <span className="legend-color" style={{ backgroundColor: '#e74c3c' }}></span>
           <span>Animé</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: '#8e44ad' }}></span>
+          <span>Bruyant</span>
         </div>
         <div className="legend-item">
           <span className="legend-color" style={{ backgroundColor: '#7f8c8d' }}></span>

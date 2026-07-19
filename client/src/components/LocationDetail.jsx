@@ -50,14 +50,14 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
 
   // Préparer les données pour le graphique
   const prepareChartData = () => {
-    if (!history || !history.buckets) return null;
+    if (!history || !history.series || history.series.length === 0) return null;
 
-    const labels = history.buckets.map((bucket) => {
-      const date = new Date(bucket.timestamp);
+    const labels = history.series.map((bucket) => {
+      const date = new Date(bucket.bucketStart);
       return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     });
 
-    const data = history.buckets.map((bucket) => bucket.avgNoiseLevel || bucket.avgNoise || 0);
+    const data = history.series.map((bucket) => bucket.avgNoise ?? 0);
 
     return {
       labels,
@@ -132,9 +132,11 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
         </div>
       )}
 
-      {chartData && (
-        <div className="history-section">
-          <h2>Historique (24h)</h2>
+      <div className="history-section">
+        <h2>Historique (24h)</h2>
+        {!chartData ? (
+          <p className="no-data">Aucune mesure disponible sur les dernières 24 heures</p>
+        ) : (
           <div className="chart-container">
             <Line
               data={chartData}
@@ -168,32 +170,31 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
               }}
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {quietHours && (
         <div className="quiet-hours-section">
           <h2>Créneaux calmes (7 derniers jours)</h2>
-          {quietHours.quietHours && quietHours.quietHours.length > 0 ? (
+          {quietHours.quietSlots && quietHours.quietSlots.length > 0 ? (
             <div className="quiet-hours-list">
-              {quietHours.quietHours.map((period, index) => (
+              {quietHours.quietSlots.map((slot, index) => (
                 <div key={index} className="quiet-hour-item">
-                  <span className="quiet-hour-day">{period.dayOfWeek}</span>
+                  <span className="quiet-hour-day">{slot.dayOfWeek}</span>
                   <span className="quiet-hour-range">
-                    {period.start} - {period.end}
+                    {slot.from} - {slot.to}
                   </span>
+                  <span className="quiet-hour-noise">{slot.avgNoise} dB</span>
                 </div>
               ))}
             </div>
           ) : (
             <p className="no-data">Aucun créneau calme détecté</p>
           )}
-          {quietHours.metadata && (
-            <div className="quiet-hours-metadata">
-              <p><strong>Seuil:</strong> {quietHours.metadata.threshold} dB</p>
-              <p><strong>Période:</strong> {quietHours.metadata.days} jours</p>
-            </div>
-          )}
+          <div className="quiet-hours-metadata">
+            <p><strong>Seuil:</strong> {quietHours.threshold} dB</p>
+            <p><strong>Période:</strong> {quietHours.analysisPeriodDays} jours</p>
+          </div>
         </div>
       )}
 

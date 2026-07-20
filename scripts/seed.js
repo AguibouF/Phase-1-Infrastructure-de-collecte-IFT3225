@@ -2,6 +2,8 @@
 // Permet de tester les endpoints de consultation et sémantiques SANS faire une collecte réelle.
 //   Usage : npm run seed
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 const { connectDB } = require('../dist/src/config/db');
 const Location = require('../dist/src/models/Location').default;
@@ -13,6 +15,7 @@ const { DENSITY, VIBE, PROXIMITY } = require('../dist/src/models/Observation');
 const LOCATIONS = [
   { slug: 'cafeteria-roger-gaudry', displayName: 'Cafétéria Roger-Gaudry', city: 'montreal', type: 'cafeteria', latitude: 45.5008, longitude: -73.6145 },
   { slug: 'bibliotheque-edc', displayName: 'Bibliothèque EDC', city: 'montreal', type: 'bibliotheque', latitude: 45.5045, longitude: -73.6132 },
+  { slug: 'parc-la-fontaine', displayName: 'Parc La Fontaine', city: 'montreal', type: 'parc', latitude: 45.5167, longitude: -73.5667 },
 ];
 
 function rand(min, max) { return Math.random() * (max - min) + min; }
@@ -24,20 +27,53 @@ function noiseForHour(h, base) {
   return Math.min(140, Math.max(0, base + peak + rand(-4, 4)));
 }
 
+// Après le seed, aligne DEVICE_API_KEY du .env sur le device du LOCATION_SLUG configuré :
+// plus besoin de copier-coller la clé à chaque seed.
+function syncEnvDeviceKey(devices) {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (!fs.existsSync(envPath)) return;
+  let env = fs.readFileSync(envPath, 'utf8');
+  const slugMatch = env.match(/^LOCATION_SLUG=(.+)$/m);
+  const slug = slugMatch ? slugMatch[1].trim() : LOCATIONS[0].slug;
+  const dev = devices.find((d) => d.locationSlug === slug);
+  if (!dev) return;
+  if (/^DEVICE_API_KEY=/m.test(env)) {
+    env = env.replace(/^DEVICE_API_KEY=.*$/m, `DEVICE_API_KEY=${dev.apiKey}`);
+  } else {
+    env = env.trimEnd() + `\nDEVICE_API_KEY=${dev.apiKey}\n`;
+  }
+  fs.writeFileSync(envPath, env);
+  console.log(`✓ DEVICE_API_KEY synchronisée dans .env (${dev.name})`);
+}
+
 async function run() {
   await connectDB();
-  console.log('Nettoyage des collections...');
-  await Promise.all([Location.deleteMany({}), Device.deleteMany({}), Measurement.deleteMany({}), Observation.deleteMany({})]);
+  // On ne régénère que les données de démo des lieux du seed : les lieux, devices
+  // (et donc leurs clés API) et les données des autres lieux sont conservés.
+  const slugs = LOCATIONS.map((l) => l.slug);
+  console.log('Nettoyage des mesures/observations de démo...');
+  await Promise.all([
+    Measurement.deleteMany({ locationSlug: { $in: slugs } }),
+    Observation.deleteMany({ locationSlug: { $in: slugs } }),
+  ]);
 
-  const locs = await Location.insertMany(LOCATIONS);
+  const locs = [];
+  for (const l of LOCATIONS) {
+    locs.push(await Location.findOneAndUpdate({ slug: l.slug }, l, { upsert: true, new: true, setDefaultsOnInsert: true }));
+  }
   console.log(`✓ ${locs.length} lieux`);
 
   const devices = [];
   for (const loc of locs) {
-    const d = await Device.create({ name: `phyphox-${loc.slug}`, locationSlug: loc.slug, lastSeenAt: new Date() });
+    const d = await Device.findOneAndUpdate(
+      { name: `phyphox-${loc.slug}`, locationSlug: loc.slug },
+      { lastSeenAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     devices.push(d);
     console.log(`✓ device ${d.name}  apiKey=${d.apiKey}`);
   }
+  syncEnvDeviceKey(devices);
 
   const measurements = [];
   const observations = [];

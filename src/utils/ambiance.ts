@@ -108,15 +108,34 @@ interface QuietHoursOptions {
   dayOfWeek: number | null;
 }
 
+// Créneaux exprimés en heure locale de Montréal (America/Montreal, changement
+// d'heure inclus) : « lundi 09:00 » correspond à ce que vivent les usagers sur
+// place, pas à l'heure UTC de stockage.
+const MONTREAL_TIME = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Montreal',
+  weekday: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+function montrealDayMinutes(date: Date): { dow: number; minutes: number } {
+  const parts = MONTREAL_TIME.formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return {
+    dow: WEEKDAY_INDEX[get('weekday')],
+    minutes: parseInt(get('hour'), 10) * 60 + parseInt(get('minute'), 10),
+  };
+}
+
 // Regroupe les mesures par (jour, créneau de 30 min) et garde celles sous le seuil.
 export function buildQuietHours(measurements: MeasurementLike[], { thresholdDb, dayOfWeek }: QuietHoursOptions): QuietSlot[] {
   const buckets: Record<string, { sum: number; n: number; day: number; fromMin: number }> = {};
   for (const m of measurements) {
     if (m.type !== 'noise_level') continue;
-    const d = new Date(m.timestamp);
-    const dow = d.getUTCDay();
+    const { dow, minutes } = montrealDayMinutes(new Date(m.timestamp));
     if (dayOfWeek != null && dow !== dayOfWeek) continue;
-    const minutes = d.getUTCHours() * 60 + d.getUTCMinutes();
     const slot = Math.floor(minutes / 30) * 30;
     const key = `${dow}-${slot}`;
     if (!buckets[key]) buckets[key] = { sum: 0, n: 0, day: dow, fromMin: slot };

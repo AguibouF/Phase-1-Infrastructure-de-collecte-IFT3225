@@ -52,9 +52,16 @@ async function run() {
   // (et donc leurs clés API) et les données des autres lieux sont conservés.
   const slugs = LOCATIONS.map((l) => l.slug);
   console.log('Nettoyage des mesures/observations de démo...');
+  // Ne supprime que les données SIMULÉES : leur timestamp est antidaté par rapport
+  // à receivedAt (insertion en batch), alors qu'une collecte réelle (bridge, client)
+  // a receivedAt ≈ timestamp. Les collectes réelles sont donc conservées.
+  const isSimulated = {
+    locationSlug: { $in: slugs },
+    $expr: { $gt: [{ $abs: { $subtract: ['$receivedAt', '$timestamp'] } }, 60e3] },
+  };
   await Promise.all([
-    Measurement.deleteMany({ locationSlug: { $in: slugs } }),
-    Observation.deleteMany({ locationSlug: { $in: slugs } }),
+    Measurement.deleteMany(isSimulated),
+    Observation.deleteMany(isSimulated),
   ]);
 
   const locs = [];
@@ -77,7 +84,9 @@ async function run() {
 
   const measurements = [];
   const observations = [];
-  const now = Date.now();
+  // Décalage de 2 min pour que même le point simulé le plus récent reste
+  // distinguable d'une collecte réelle (cf. filtre isSimulated ci-dessus).
+  const now = Date.now() - 2 * 60e3;
   const DAYS_BACK = 14;
 
   for (const loc of locs) {

@@ -9,6 +9,7 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
   const [ambiance, setAmbiance] = useState(null);
   const [history, setHistory] = useState(null);
   const [quietHours, setQuietHours] = useState(null);
+  const [observations, setObservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -30,14 +31,16 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
   const fetchLocationData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const [currentAmbiance, historyData, quietHoursData] = await Promise.all([
+      const [currentAmbiance, historyData, quietHoursData, observationsData] = await Promise.all([
         ambianceApi.getCurrentAmbiance(location.slug),
         ambianceApi.getHistory(location.slug, { last: '24h', bucket: '1h' }),
         ambianceApi.getQuietHours(location.slug, { days: 7 }),
+        ambianceApi.getObservations(location.slug, { perPage: 5 }),
       ]);
       setAmbiance(currentAmbiance.data);
       setHistory(historyData.data);
       setQuietHours(quietHoursData.data);
+      setObservations(observationsData.data || []);
     } catch (err) {
       if (!silent) setError('Erreur lors du chargement des données');
       console.error(err);
@@ -107,6 +110,46 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
   const yMin = measuredValues.length ? Math.max(0, Math.floor(Math.min(...measuredValues) - 5)) : 0;
   const yMax = measuredValues.length ? Math.min(140, Math.ceil(Math.max(...measuredValues) + 5)) : 140;
 
+  // Organise les créneaux calmes de façon lisible : groupés par jour (lundi -> dimanche),
+  // triés chronologiquement, et les créneaux de 30 min contigus fusionnés en plages
+  // (la moyenne fusionnée est pondérée par le nombre de mesures de chaque créneau).
+  const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const DAY_FR = {
+    Monday: 'Lundi', Tuesday: 'Mardi', Wednesday: 'Mercredi', Thursday: 'Jeudi',
+    Friday: 'Vendredi', Saturday: 'Samedi', Sunday: 'Dimanche',
+  };
+
+  const organizeQuietSlots = () => {
+    if (!quietHours || !quietHours.quietSlots) return [];
+    const byDay = {};
+    for (const slot of quietHours.quietSlots) {
+      (byDay[slot.dayOfWeek] = byDay[slot.dayOfWeek] || []).push(slot);
+    }
+    return DAY_ORDER.filter((day) => byDay[day]).map((day) => {
+      const slots = [...byDay[day]].sort((a, b) => a.from.localeCompare(b.from));
+      const ranges = [];
+      for (const s of slots) {
+        const last = ranges[ranges.length - 1];
+        if (last && last.to === s.from) {
+          last.to = s.to;
+          last.noiseSum += s.avgNoise * s.samples;
+          last.samples += s.samples;
+        } else {
+          ranges.push({ from: s.from, to: s.to, noiseSum: s.avgNoise * s.samples, samples: s.samples });
+        }
+      }
+      return {
+        day: DAY_FR[day] || day,
+        ranges: ranges.map((r) => ({
+          from: r.from, to: r.to, samples: r.samples,
+          avgNoise: Math.round((r.noiseSum / r.samples) * 10) / 10,
+        })),
+      };
+    });
+  };
+
+  const quietDays = organizeQuietSlots();
+
   const handleObservationSubmit = async (e) => {
     e.preventDefault();
     setObservationError('');
@@ -119,6 +162,7 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
       });
       setObservationSuccess(true);
       setObservationData({ density: '', proximity: '', vibe: '', notes: '' });
+      fetchLocationData(true); // rafraîchit l'historique des observations sans écran de chargement
       setTimeout(() => setShowObservationForm(false), 2000);
     } catch (err) {
       setObservationError(err.response?.data?.error?.message || 'Erreur lors de la soumission');
@@ -212,15 +256,20 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
       {quietHours && (
         <div className="quiet-hours-section">
           <h2>Créneaux calmes (7 derniers jours)</h2>
-          {quietHours.quietSlots && quietHours.quietSlots.length > 0 ? (
+          {quietDays.length > 0 ? (
             <div className="quiet-hours-list">
-              {quietHours.quietSlots.map((slot, index) => (
-                <div key={index} className="quiet-hour-item">
-                  <span className="quiet-hour-day">{slot.dayOfWeek}</span>
-                  <span className="quiet-hour-range">
-                    {slot.from} - {slot.to}
-                  </span>
-                  <span className="quiet-hour-noise">{slot.avgNoise} dB</span>
+              {quietDays.map((dayGroup) => (
+                <div key={dayGroup.day} className="quiet-day-group">
+                  <h3 className="quiet-day-title">{dayGroup.day}</h3>
+                  {dayGroup.ranges.map((range, index) => (
+                    <div key={index} className="quiet-hour-item">
+                      <span className="quiet-hour-range">
+                        {range.from} – {range.to}
+                      </span>
+                      <span className="quiet-hour-samples">{range.samples} mesure{range.samples > 1 ? 's' : ''}</span>
+                      <span className="quiet-hour-noise">{range.avgNoise} dB</span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
@@ -233,6 +282,32 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
           </div>
         </div>
       )}
+
+      <div className="observation-section">
+        <h2>Observations récentes</h2>
+        {observations.length > 0 ? (
+          <div className="observation-history">
+            {observations.map((obs) => (
+              <div key={obs.id} className="observation-item">
+                <div className="observation-item-header">
+                  <span className={`badge ${(obs.vibe || '').toLowerCase()}`}>{obs.vibe}</span>
+                  <span className="observation-date">
+                    {new Date(obs.timestamp).toLocaleString('fr-FR', {
+                      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+                <p className="observation-details">
+                  Densité : {obs.density} • Proximité : {obs.proximity}
+                </p>
+                {obs.notes && <p className="observation-notes">« {obs.notes} »</p>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="no-data">Aucune observation pour ce lieu</p>
+        )}
+      </div>
 
       {user && (
         <div className="observation-section">

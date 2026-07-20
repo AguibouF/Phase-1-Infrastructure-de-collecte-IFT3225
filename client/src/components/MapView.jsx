@@ -203,9 +203,10 @@ const MapView = ({ locations, onLocationClick }) => {
         <p className="legend-note">
           L'ambiance affichée reflète les mesures des <strong>30 dernières minutes</strong>.
           Sans mesure récente, le lieu affiche sa <strong>dernière ambiance connue</strong> en
-          couleur estompée (contour pointillé), avec son ancienneté — et passe en gris
-          seulement s'il n'a jamais été mesuré. L'historique complet reste consultable
-          dans la vue détaillée.
+          couleur estompée (contour pointillé), avec son ancienneté — pendant
+          <strong> 2 heures au maximum</strong>. Au-delà de 2 heures sans mesure, l'information
+          est jugée trop ancienne et le lieu passe en gris « Données non disponibles ».
+          L'historique complet reste consultable dans la vue détaillée.
         </p>
       </div>
     </div>

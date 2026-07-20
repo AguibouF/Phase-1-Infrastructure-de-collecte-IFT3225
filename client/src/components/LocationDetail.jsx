@@ -154,7 +154,7 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
                 scales: {
                   y: {
                     beginAtZero: true,
-                    max: 100,
+                    max: 140, // borne supérieure alignée sur la plage validée par l'API (0–140 dB)
                     title: {
                       display: true,
                       text: 'Niveau sonore (dB)',

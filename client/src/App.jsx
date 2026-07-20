@@ -25,6 +25,9 @@ function App() {
   // Vue « Mes lieux » (lieux où l'utilisateur a soumis des observations)
   const [showMyLocations, setShowMyLocations] = useState(false);
 
+  // Message d'information affiché sous l'en-tête (session expirée, erreur favoris…)
+  const [notice, setNotice] = useState('');
+
   // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -58,6 +61,7 @@ function App() {
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', authToken);
     setAuthView(null);
+    setNotice('');
   };
 
   const handleRegister = (userData, authToken) => {
@@ -66,6 +70,7 @@ function App() {
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', authToken);
     setAuthView(null);
+    setNotice('');
   };
 
   const handleLogout = () => {
@@ -79,6 +84,16 @@ function App() {
     localStorage.removeItem('token');
     setAuthView(null);
   };
+
+  // Déconnexion automatique quand le serveur rejette le token (voir ambianceApi)
+  useEffect(() => {
+    const onExpired = () => {
+      handleLogout();
+      setNotice('Votre session a expiré. Veuillez vous reconnecter.');
+    };
+    window.addEventListener('auth:expired', onExpired);
+    return () => window.removeEventListener('auth:expired', onExpired);
+  }, []);
 
   // Charger les favoris quand l'utilisateur se connecte
   useEffect(() => {
@@ -106,8 +121,13 @@ function App() {
         await ambianceApi.addFavorite(token, locationSlug);
         setFavorites([...favorites, locationSlug]);
       }
+      setNotice('');
     } catch (err) {
       console.error('Erreur toggle favori:', err);
+      // Un 401 est déjà géré globalement (déconnexion) ; ici on couvre les autres échecs
+      if (err.response?.status !== 401) {
+        setNotice('Impossible de modifier le favori. Vérifiez votre connexion et réessayez.');
+      }
     }
   };
 
@@ -131,6 +151,7 @@ function App() {
           <h1>Ambiance des Lieux</h1>
           <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
         </header>
+        {notice && <div className="notice-banner">{notice}</div>}
         <LoginForm
           onLogin={handleLogin}
           onSwitchToRegister={() => setAuthView('register')}
@@ -192,6 +213,8 @@ function App() {
           </div>
         )}
       </header>
+
+      {notice && <div className="notice-banner">{notice}</div>}
 
       {user && showMyLocations && !selectedLocation ? (
         <MyLocations

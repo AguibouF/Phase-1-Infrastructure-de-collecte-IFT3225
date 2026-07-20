@@ -443,6 +443,18 @@
   color: var(--accent-hover);
 }
 
+.notice-banner {
+  background: #fef9e7;
+  color: #9a7d0a;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin: 16px auto;
+  max-width: 900px;
+  border: 1px solid #f7dc6f;
+  font-size: 14px;
+  text-align: center;
+}
+
 .error-message {
   background: #fdf1f0;
   color: #b03a2e;

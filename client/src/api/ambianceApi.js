@@ -3,6 +3,22 @@ import axios from 'axios';
 // URL de l'API configurable via client/.env (VITE_API_URL) — voir .env.example
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 
+// Si le serveur rejette le token (401 sur une action protégée), on prévient
+// l'application pour qu'elle déconnecte l'utilisateur au lieu d'échouer en silence.
+// Les 401 de /auth/login et /auth/register sont exclus : ce sont de simples
+// identifiants invalides, pas une session expirée.
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const url = error.config?.url || '';
+    const isAuthAttempt = url.includes('/auth/login') || url.includes('/auth/register');
+    if (error.response?.status === 401 && !isAuthAttempt) {
+      window.dispatchEvent(new Event('auth:expired'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const ambianceApi = {
   // Récupérer tous les lieux
   getLocations: async () => {

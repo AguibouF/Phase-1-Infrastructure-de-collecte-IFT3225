@@ -11,8 +11,8 @@ const Observation = require('../dist/src/models/Observation').default;
 const { DENSITY, VIBE, PROXIMITY } = require('../dist/src/models/Observation');
 
 const LOCATIONS = [
-  { slug: 'cafeteria-roger-gaudry', displayName: 'Cafétéria Roger-Gaudry', city: 'montreal', type: 'cafeteria' },
-  { slug: 'bibliotheque-edc', displayName: 'Bibliothèque EDC', city: 'montreal', type: 'bibliotheque' },
+  { slug: 'cafeteria-roger-gaudry', displayName: 'Cafétéria Roger-Gaudry', city: 'montreal', type: 'cafeteria', latitude: 45.5008, longitude: -73.6145 },
+  { slug: 'bibliotheque-edc', displayName: 'Bibliothèque EDC', city: 'montreal', type: 'bibliotheque', latitude: 45.5045, longitude: -73.6132 },
 ];
 
 function rand(min, max) { return Math.random() * (max - min) + min; }

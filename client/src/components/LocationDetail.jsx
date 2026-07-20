@@ -72,7 +72,13 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
       return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     });
 
-    const data = history.series.map((bucket) => bucket.avgNoise ?? 0);
+    // Les tranches sans mesure restent null (trou dans la courbe) : les tracer
+    // à 0 dB laisserait croire à un silence total au lieu d'une absence de données.
+    const data = history.series.map((bucket) => bucket.avgNoise ?? null);
+
+    // Toutes les tranches vides = aucune donnée exploitable : on affiche
+    // l'état vide plutôt qu'un graphique sans courbe.
+    if (data.every((value) => value === null)) return null;
 
     return {
       labels,
@@ -84,12 +90,22 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
           backgroundColor: 'rgba(52, 152, 219, 0.1)',
           tension: 0.4,
           fill: true,
+          spanGaps: false,
         },
       ],
     };
   };
 
   const chartData = prepareChartData();
+
+  // Échelle adaptative : bornes calées sur les valeurs mesurées (± 5 dB de marge),
+  // dans la plage validée par l'API (0–140 dB). Un axe fixe 0–140 écraserait la
+  // plage utile (40–80 dB) et rendrait les variations illisibles.
+  const measuredValues = chartData
+    ? chartData.datasets[0].data.filter((v) => v !== null)
+    : [];
+  const yMin = measuredValues.length ? Math.max(0, Math.floor(Math.min(...measuredValues) - 5)) : 0;
+  const yMax = measuredValues.length ? Math.min(140, Math.ceil(Math.max(...measuredValues) + 5)) : 140;
 
   const handleObservationSubmit = async (e) => {
     e.preventDefault();
@@ -173,8 +189,8 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
                 },
                 scales: {
                   y: {
-                    beginAtZero: true,
-                    max: 140, // borne supérieure alignée sur la plage validée par l'API (0–140 dB)
+                    min: yMin,
+                    max: yMax,
                     title: {
                       display: true,
                       text: 'Niveau sonore (dB)',

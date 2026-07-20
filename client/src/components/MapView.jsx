@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ambianceApi } from '../api/ambianceApi';
@@ -119,6 +119,9 @@ const MapView = ({ locations, onLocationClick }) => {
                 click: () => onLocationClick(location),
               }}
             >
+              <Tooltip direction="top" offset={[0, -15]}>
+                {location.displayName}
+              </Tooltip>
               <Popup>
                 <div style={{ minWidth: '200px' }}>
                   <h3 style={{ margin: '0 0 10px 0' }}>{location.displayName}</h3>

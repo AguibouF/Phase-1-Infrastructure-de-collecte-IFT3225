@@ -193,9 +193,22 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
         <div className="ambiance-section">
           <h2>Ambiance actuelle</h2>
           <div className="ambiance-badge">
-            <span className={`badge ${(ambiance.classification || ambiance.ambianceLabel || '')?.toLowerCase() || 'default'}`}>
-              {ambiance.classification || ambiance.ambianceLabel || 'Non classifié'}
-            </span>
+            {(ambiance.ambianceLabel === 'inconnu' && ambiance.lastKnown && ambiance.lastKnown.ambianceLabel !== 'inconnu') ? (
+              <>
+                <span className={`badge ${ambiance.lastKnown.ambianceLabel.toLowerCase()}`} style={{ opacity: 0.7 }}>
+                  {ambiance.lastKnown.ambianceLabel}
+                </span>
+                <p className="stale-note">
+                  Dernière ambiance connue ({new Date(ambiance.lastKnown.asOf).toLocaleString('fr-FR', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                  })}) — aucune mesure dans la fenêtre courante.
+                </p>
+              </>
+            ) : (
+              <span className={`badge ${(ambiance.classification || ambiance.ambianceLabel || '')?.toLowerCase() || 'default'}`}>
+                {ambiance.classification || ambiance.ambianceLabel || 'Non classifié'}
+              </span>
+            )}
           </div>
           {ambiance.sampleSize && (
             <div className="ambiance-metadata">

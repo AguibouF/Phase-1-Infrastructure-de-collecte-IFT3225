@@ -64,6 +64,9 @@ export interface NowPortrait {
     proximity: string | null;
   };
   ambianceLabel: AmbianceLabel;
+  // Renseigné quand la fenêtre courante est vide : dernière ambiance calculable,
+  // datée, pour que le client puisse l'afficher comme information périmée.
+  lastKnown?: { ambianceLabel: AmbianceLabel; noise: number | null; asOf: string };
 }
 
 // Portrait actuel d'un lieu sur une fenêtre donnée.

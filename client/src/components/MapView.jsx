@@ -50,6 +50,22 @@ const MapView = ({ locations, onLocationClick }) => {
     }
   }, [locations]);
 
+  // Temps réel (SSE, bonus) : à chaque nouvelle mesure/observation, seul le
+  // marqueur du lieu concerné est rafraîchi, sans recharger la page.
+  useEffect(() => {
+    const source = ambianceApi.subscribeToAmbianceEvents(async ({ locationSlug }) => {
+      try {
+        const response = await ambianceApi.getCurrentAmbiance(locationSlug);
+        setLocationsWithAmbiance((prev) =>
+          prev.map((loc) => (loc.slug === locationSlug ? { ...loc, ambiance: response.data } : loc))
+        );
+      } catch {
+        // Échec du rafraîchissement : le marqueur garde son dernier état connu
+      }
+    });
+    return () => source.close();
+  }, []);
+
   // Fonction pour déterminer la couleur du marqueur selon la classification
   const getMarkerColor = (ambiance) => {
     if (!ambiance) return '#7f8c8d'; // Gris par défaut

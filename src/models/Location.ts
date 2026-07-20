@@ -1,7 +1,20 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, HydratedDocument } from 'mongoose';
 
 // Un lieu est une entité stable, identifiée par un slug en kebab-case.
-const locationSchema = new mongoose.Schema(
+export interface ILocation {
+  slug: string;
+  displayName: string;
+  city: string;
+  type: string;
+  latitude?: number; // Phase 2 : coordonnées optionnelles (rétrocompatibilité)
+  longitude?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type LocationDocument = HydratedDocument<ILocation>;
+
+const locationSchema = new Schema<ILocation>(
   {
     slug: {
       type: String,
@@ -24,10 +37,12 @@ locationSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc, ret) => {
-    ret.id = ret._id;
-    delete ret._id;
-    return ret;
+    const r = ret as unknown as Record<string, unknown>;
+    r.id = r._id;
+    delete r._id;
+    return r;
   },
 });
 
-module.exports = mongoose.model('Location', locationSchema);
+const Location = mongoose.model<ILocation>('Location', locationSchema);
+export default Location;

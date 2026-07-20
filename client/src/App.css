@@ -443,6 +443,12 @@
   color: var(--accent-hover);
 }
 
+.live-indicator {
+  color: #1e8449;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
 .notice-banner {
   background: #fef9e7;
   color: #9a7d0a;

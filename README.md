@@ -21,8 +21,13 @@ API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur
 npm install                 # installe les dépendances backend
 cp .env.example .env        # puis renseignez MONGODB_URI et ADMIN_API_KEY
 npm run seed                # (optionnel) peuple la base de données de démo
-npm start                   # démarre le serveur backend sur http://localhost:3000
+npm start                   # compile le TypeScript puis démarre le serveur sur http://localhost:3000
 ```
+
+> **Bonus Phase 2 — backend TypeScript** : le serveur est écrit en TypeScript
+> (`index.ts`, `src/**/*.ts`) avec typage complet du modèle (interfaces Mongoose),
+> de la couche données et des routes. `npm start` compile automatiquement
+> (`npm run build` = `tsc`) vers `dist/` avant de démarrer.
 
 ### Application client React (Phase 2)
 
@@ -46,6 +51,17 @@ L'application client React permet de :
 
 `npm run seed` affiche les **clés API des devices** créés : copiez-en une pour tester les `POST` (en-tête `x-api-key`) et pour configurer le bridge.
 
+### Connexion et test des actions protégées
+
+1. Lancez le backend (`npm start`) puis le client (`cd client && npm run dev`) et ouvrez `http://localhost:5173`.
+2. Cliquez sur **Connexion** puis **Créer un compte** (nom d'utilisateur, courriel, mot de passe d'au moins 6 caractères). La connexion est automatique après l'inscription et l'en-tête affiche « Bonjour, \<utilisateur\> ».
+3. Une fois connecté, testez les actions protégées :
+   - ouvrez un lieu depuis la carte → **+ Nouvelle observation** → remplissez et soumettez : l'observation est liée à votre compte (champ `author`) et horodatée côté serveur ;
+   - **☆ Ajouter aux favoris** dans la vue détaillée, puis utilisez le filtre **Mes favoris** sur la carte ;
+   - ouvrez **Mes lieux** pour voir le récapitulatif de vos contributions (nombre d'observations, dernière écoute).
+4. Vérifiez le refus sans authentification : `POST /v1/observations/user` sans en-tête `Authorization` renvoie **401** `NO_TOKEN` (testable via la collection Postman ou `curl`).
+5. Cliquez sur **Déconnexion** : le formulaire d'observation, les favoris et « Mes lieux » disparaissent de l'interface ; si le token expire (7 jours), l'application déconnecte automatiquement et invite à se reconnecter.
+
 ### Variables d'environnement (`.env`)
 
 | Variable | Rôle |
@@ -63,15 +79,16 @@ L'application client React permet de :
 L'organisation sépare routes, modèles et middlewares (pas de mégafichier `index.js`) :
 
 ```
-rapport/
-├── index.js                 # point d'entrée backend : connecte la DB puis démarre Express
+├── index.ts                 # point d'entrée backend (TypeScript) : connecte la DB puis démarre Express
+├── tsconfig.json            # configuration TypeScript (compilation vers dist/)
 ├── src/
-│   ├── app.js               # construction de l'app Express (middlewares + montage des routes)
-│   ├── config/db.js         # connexion Mongoose à MongoDB Atlas (URI via .env)
-│   ├── models/              # schémas Mongoose : Device, Location, Measurement, Observation, User
+│   ├── app.ts               # construction de l'app Express (middlewares + montage des routes)
+│   ├── config/db.ts         # connexion Mongoose à MongoDB Atlas (URI via .env)
+│   ├── models/              # schémas Mongoose typés : Device, Location, Measurement, Observation, User
 │   ├── middlewares/         # auth (x-api-key), userAuth (JWT), rate limit, gestion d'erreurs
-│   ├── routes/              # devices, locations, measurements, observations, ambiance, auth
-│   └── utils/               # enveloppe de réponse, pagination, fenêtres temporelles, calculs d'ambiance
+│   ├── routes/              # devices, locations, measurements, observations, ambiance, auth, events (SSE)
+│   ├── types/               # augmentations de types Express (req.device, req.user)
+│   └── utils/               # enveloppe de réponse, pagination, fenêtres temporelles, calculs d'ambiance, bus d'événements
 ├── scripts/seed.js          # peuplement de données de démonstration
 ├── bridge/bridge.js         # collecte : Phyphox -> POST /v1/measurements
 ├── client/                  # Application React (Phase 2)
@@ -123,6 +140,19 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | GET | `/v1/ambiance/{slug}/quiet-hours` | `days?`=`7`\|`14`\|`30`, `threshold?` (dB), `dayOfWeek?`=0–6 |
 | GET | `/v1/ambiance/compare` | `locations` (slugs séparés par virgule), `window?` |
 | GET | `/v1/ambiance/{slug}/history` | `last?` ou `from`/`to`, `bucket?`=`5m`\|`15m`\|`30m`\|`1h` |
+
+### Temps réel (Phase 2, bonus SSE)
+| Méthode | Endpoint | Paramètres | Auth |
+|---|---|---|---|
+| GET | `/v1/events` | `locationSlug?` (filtre sur un lieu) | publique |
+
+Flux **Server-Sent Events** : chaque nouvelle mesure ou observation est diffusée
+aux clients connectés sous la forme `event: measurement|observation` avec
+`data: { kind, locationSlug, at }`. Le client React s'y abonne (EventSource) pour
+rafraîchir le marqueur du lieu concerné sur la carte et le portrait détaillé
+**sans rechargement de page** (indicateur « Mis à jour en direct » dans la vue
+détaillée). Test rapide : `curl -N http://localhost:3000/v1/events` puis postez
+une mesure dans un autre terminal.
 
 ### Authentification utilisateur (Phase 2)
 | Méthode | Endpoint | Corps | Auth | Codes |

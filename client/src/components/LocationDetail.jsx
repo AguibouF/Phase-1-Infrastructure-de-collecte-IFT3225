@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { ambianceApi } from '../api/ambianceApi';
@@ -23,30 +23,45 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
   const [observationError, setObservationError] = useState('');
   const [observationSuccess, setObservationSuccess] = useState(false);
 
-  useEffect(() => {
-    const fetchLocationData = async () => {
-      try {
-        setLoading(true);
-        const [currentAmbiance, historyData, quietHoursData] = await Promise.all([
-          ambianceApi.getCurrentAmbiance(location.slug),
-          ambianceApi.getHistory(location.slug, { last: '24h', bucket: '1h' }),
-          ambianceApi.getQuietHours(location.slug, { days: 7 }),
-        ]);
-        setAmbiance(currentAmbiance.data);
-        setHistory(historyData.data);
-        setQuietHours(quietHoursData.data);
-      } catch (err) {
-        setError('Erreur lors du chargement des données');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Horodatage de la dernière mise à jour reçue en direct (SSE)
+  const [liveUpdatedAt, setLiveUpdatedAt] = useState(null);
 
+  // silent=true : rafraîchissement en arrière-plan (temps réel), sans écran de chargement
+  const fetchLocationData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const [currentAmbiance, historyData, quietHoursData] = await Promise.all([
+        ambianceApi.getCurrentAmbiance(location.slug),
+        ambianceApi.getHistory(location.slug, { last: '24h', bucket: '1h' }),
+        ambianceApi.getQuietHours(location.slug, { days: 7 }),
+      ]);
+      setAmbiance(currentAmbiance.data);
+      setHistory(historyData.data);
+      setQuietHours(quietHoursData.data);
+    } catch (err) {
+      if (!silent) setError('Erreur lors du chargement des données');
+      console.error(err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [location]);
+
+  useEffect(() => {
     if (location) {
       fetchLocationData();
     }
-  }, [location]);
+  }, [location, fetchLocationData]);
+
+  // Temps réel (SSE, bonus) : le portrait se rafraîchit dès qu'une nouvelle
+  // mesure ou observation arrive pour ce lieu, sans recharger la page.
+  useEffect(() => {
+    if (!location) return;
+    const source = ambianceApi.subscribeToAmbianceEvents(() => {
+      fetchLocationData(true);
+      setLiveUpdatedAt(new Date());
+    }, location.slug);
+    return () => source.close();
+  }, [location, fetchLocationData]);
 
   // Préparer les données pour le graphique
   const prepareChartData = () => {
@@ -128,6 +143,11 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
               <p><strong>Mesures:</strong> {ambiance.sampleSize.measurements || 0}</p>
               <p><strong>Observations:</strong> {ambiance.sampleSize.observations || 0}</p>
             </div>
+          )}
+          {liveUpdatedAt && (
+            <p className="live-indicator">
+              ● Mis à jour en direct à {liveUpdatedAt.toLocaleTimeString('fr-FR')}
+            </p>
           )}
         </div>
       )}

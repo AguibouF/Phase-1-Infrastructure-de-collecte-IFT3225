@@ -2,12 +2,13 @@
   "name": "ambiance-collecte-server",
   "version": "1.0.0",
   "description": "Serveur Express + MongoDB Atlas pour la collecte environnementale (ambiance des lieux) — Phase 1, IFT3225.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js",
-    "seed": "node scripts/seed.js",
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "npm run build && node --watch dist/index.js",
+    "seed": "npm run build && node scripts/seed.js",
     "bridge": "node bridge/bridge.js"
   },
   "keywords": [
@@ -32,5 +33,13 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
   }
 }

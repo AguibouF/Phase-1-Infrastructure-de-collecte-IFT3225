@@ -1,7 +1,9 @@
-const { ApiError, meta } = require('../utils/responses');
+import type { Request, Response, NextFunction } from 'express';
+import { Error as MongooseError } from 'mongoose';
+import { ApiError, meta } from '../utils/responses';
 
 // 404 pour toute route non déclarée.
-function notFoundHandler(_req, res) {
+export function notFoundHandler(_req: Request, res: Response): void {
   res.status(404).json({
     status: 'error',
     error: { code: 'NOT_FOUND', message: 'Endpoint inexistant.' },
@@ -9,10 +11,15 @@ function notFoundHandler(_req, res) {
   });
 }
 
+interface MongoDuplicateError {
+  code?: number;
+  keyValue?: Record<string, unknown>;
+}
+
 // Gestionnaire central : convertit toute erreur en enveloppe d'erreur standard.
-function errorHandler(err, _req, res, _next) {
+export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction): Response {
   // Erreurs de validation Mongoose -> 400 VALIDATION_ERROR
-  if (err.name === 'ValidationError') {
+  if (err instanceof MongooseError.ValidationError) {
     const details = Object.values(err.errors).map((e) => ({ field: e.path, issue: e.kind }));
     return res.status(400).json({
       status: 'error',
@@ -21,15 +28,16 @@ function errorHandler(err, _req, res, _next) {
     });
   }
   // Violation d'unicité Mongo -> 409
-  if (err.code === 11000) {
+  if (typeof err === 'object' && err !== null && (err as MongoDuplicateError).code === 11000) {
+    const keyValue = (err as MongoDuplicateError).keyValue || {};
     return res.status(409).json({
       status: 'error',
-      error: { code: 'CONFLICT', message: 'Ressource déjà existante.', details: [{ field: Object.keys(err.keyValue || {})[0], issue: 'duplicate' }] },
+      error: { code: 'CONFLICT', message: 'Ressource déjà existante.', details: [{ field: Object.keys(keyValue)[0], issue: 'duplicate' }] },
       meta: meta(),
     });
   }
   // CastError (ObjectId invalide) -> 404
-  if (err.name === 'CastError') {
+  if (err instanceof MongooseError.CastError) {
     return res.status(404).json({
       status: 'error',
       error: { code: 'NOT_FOUND', message: 'Identifiant invalide ou ressource introuvable.' },
@@ -52,5 +60,3 @@ function errorHandler(err, _req, res, _next) {
     meta: meta(),
   });
 }
-
-module.exports = { notFoundHandler, errorHandler };

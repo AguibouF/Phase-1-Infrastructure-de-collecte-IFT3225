@@ -1,8 +1,19 @@
-const crypto = require('crypto');
-const mongoose = require('mongoose');
+import crypto from 'crypto';
+import mongoose, { Schema, HydratedDocument } from 'mongoose';
 
 // Un appareil = une source de collecte identifiable, porteuse d'une clé API.
-const deviceSchema = new mongoose.Schema(
+export interface IDevice {
+  name: string;
+  locationSlug: string;
+  apiKey: string;
+  lastSeenAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type DeviceDocument = HydratedDocument<IDevice>;
+
+const deviceSchema = new Schema<IDevice>(
   {
     name: { type: String, required: true, trim: true },
     locationSlug: { type: String, required: true, trim: true, lowercase: true },
@@ -24,10 +35,12 @@ deviceSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc, ret) => {
-    ret.id = ret._id;
-    delete ret._id;
-    return ret;
+    const r = ret as unknown as Record<string, unknown>;
+    r.id = r._id;
+    delete r._id;
+    return r;
   },
 });
 
-module.exports = mongoose.model('Device', deviceSchema);
+const Device = mongoose.model<IDevice>('Device', deviceSchema);
+export default Device;

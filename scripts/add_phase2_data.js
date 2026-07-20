@@ -2,12 +2,12 @@
 // Usage : node scripts/add_phase2_data.js
 require('dotenv').config();
 const mongoose = require('mongoose');
-const { connectDB } = require('../src/config/db');
-const Location = require('../src/models/Location');
-const Device = require('../src/models/Device');
-const Measurement = require('../src/models/Measurement');
-const Observation = require('../src/models/Observation');
-const { DENSITY, VIBE, PROXIMITY } = require('../src/models/Observation');
+const { connectDB } = require('../dist/src/config/db');
+const Location = require('../dist/src/models/Location').default;
+const Device = require('../dist/src/models/Device').default;
+const Measurement = require('../dist/src/models/Measurement').default;
+const Observation = require('../dist/src/models/Observation').default;
+const { DENSITY, VIBE, PROXIMITY } = require('../dist/src/models/Observation');
 
 function rand(min, max) { return Math.random() * (max - min) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }

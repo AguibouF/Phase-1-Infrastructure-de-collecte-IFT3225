@@ -107,4 +107,20 @@ export const ambianceApi = {
     });
     return response.data;
   },
+
+  // Temps réel (SSE, bonus) : s'abonner aux nouvelles mesures/observations.
+  // onEvent reçoit { kind, locationSlug, at } ; locationSlug (optionnel) filtre côté serveur.
+  // L'appelant doit fermer le flux avec .close() au démontage du composant.
+  subscribeToAmbianceEvents: (onEvent, locationSlug) => {
+    const url = locationSlug
+      ? `${API_BASE_URL}/events?locationSlug=${encodeURIComponent(locationSlug)}`
+      : `${API_BASE_URL}/events`;
+    const source = new EventSource(url);
+    const handler = (e) => {
+      try { onEvent(JSON.parse(e.data)); } catch { /* événement malformé : ignoré */ }
+    };
+    source.addEventListener('measurement', handler);
+    source.addEventListener('observation', handler);
+    return source;
+  },
 };

@@ -1,9 +1,9 @@
-const express = require('express');
-const Device = require('../models/Device');
-const Location = require('../models/Location');
-const { success, errors } = require('../utils/responses');
-const { parsePagination, paginationMeta } = require('../utils/pagination');
-const { adminAuth } = require('../middlewares/auth');
+import express, { Request, Response, NextFunction } from 'express';
+import Device from '../models/Device';
+import Location from '../models/Location';
+import { success, errors, ErrorDetail } from '../utils/responses';
+import { parsePagination, paginationMeta } from '../utils/pagination';
+import { adminAuth } from '../middlewares/auth';
 
 const router = express.Router();
 
@@ -11,10 +11,10 @@ const router = express.Router();
 // ⚠️ FAILLE VOLONTAIRE (Phase 1) : cet endpoint n'est PAS protégé.
 // N'importe qui peut créer un device et obtenir une clé API valide.
 // Voir la section "Sécurité" du README pour la vulnérabilité et la solution proposée.
-router.post('/', async (req, res, next) => {
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, locationSlug } = req.body || {};
-    const missing = [];
+    const { name, locationSlug } = (req.body || {}) as { name?: string; locationSlug?: string };
+    const missing: ErrorDetail[] = [];
     if (!name) missing.push({ field: 'name', issue: 'missing' });
     if (!locationSlug) missing.push({ field: 'locationSlug', issue: 'missing' });
     if (missing.length) throw errors.validation('Champs requis manquants.', missing);
@@ -22,16 +22,16 @@ router.post('/', async (req, res, next) => {
     if (!loc) throw errors.locationNotFound('locationSlug ne correspond à aucun lieu.');
     if (await Device.findOne({ name, locationSlug: String(locationSlug).toLowerCase() }))
       throw errors.conflict('DEVICE_EXISTS', 'Un appareil portant ce nom existe déjà pour ce lieu.');
-    const device = await Device.create({ name, locationSlug });
+    const device = await Device.create({ name: name as string, locationSlug: locationSlug as string });
     // La clé n'est renvoyée qu'à la création.
     success(res, 201, { id: device.id, name: device.name, locationSlug: device.locationSlug, apiKey: device.apiKey });
   } catch (e) { next(e); }
 });
 
 // GET /v1/devices — public (la clé API n'est jamais exposée ici)
-router.get('/', async (req, res, next) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filter = {};
+    const filter: Record<string, unknown> = {};
     if (req.query.locationSlug) filter.locationSlug = String(req.query.locationSlug).toLowerCase();
     const { page, perPage, skip, sort } = parsePagination(req.query, {
       defaultSort: 'createdAt:desc',
@@ -46,7 +46,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // DELETE /v1/devices/:id — gestion (clé admin) : révoque la clé et supprime l'appareil
-router.delete('/:id', adminAuth, async (req, res, next) => {
+router.delete('/:id', adminAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const device = await Device.findByIdAndDelete(req.params.id);
     if (!device) throw errors.notFound('Appareil introuvable.');
@@ -54,4 +54,4 @@ router.delete('/:id', adminAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-module.exports = router;
+export default router;

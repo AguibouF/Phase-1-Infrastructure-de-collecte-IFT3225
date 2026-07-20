@@ -1,12 +1,13 @@
-const Device = require('../models/Device');
-const { errors } = require('../utils/responses');
+import type { Request, Response, NextFunction } from 'express';
+import Device from '../models/Device';
+import { errors } from '../utils/responses';
 
 // Authentification des endpoints d'ÉCRITURE (collecte).
 // Conforme à la Tâche 5 : clé transmise dans l'en-tête x-api-key.
 //   401 MISSING_AUTH  -> en-tête absent
 //   403 FORBIDDEN     -> clé qui ne correspond à aucun device
 //   (sinon) requête autorisée, req.device renseigné
-async function deviceAuth(req, _res, next) {
+export async function deviceAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
   try {
     const key = req.get('x-api-key');
     if (!key) throw errors.missingAuth('En-tête x-api-key absent.');
@@ -23,7 +24,7 @@ async function deviceAuth(req, _res, next) {
 
 // Authentification des endpoints de GESTION (clé d'administration).
 // Utilisée pour DELETE /devices et la gestion des lieux.
-function adminAuth(req, _res, next) {
+export function adminAuth(req: Request, _res: Response, next: NextFunction): void {
   try {
     const key = req.get('x-api-key');
     if (!key) throw errors.missingAuth('En-tête x-api-key absent.');
@@ -33,5 +34,3 @@ function adminAuth(req, _res, next) {
     next(err);
   }
 }
-
-module.exports = { deviceAuth, adminAuth };

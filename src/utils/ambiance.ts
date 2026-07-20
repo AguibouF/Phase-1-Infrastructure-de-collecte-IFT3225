@@ -1,20 +1,37 @@
 // Calculs sémantiques : transformer mesures + observations en réponses utiles.
-const DENSITY_SCORE = { 'Vide': 10, 'Modéré': 40, 'Fréquenté': 70, 'Bondé': 95 };
 
-function avg(nums) {
+// Sous-ensembles des documents nécessaires aux calculs (découplés de Mongoose).
+export interface MeasurementLike {
+  type: string;
+  value: number;
+  timestamp: Date;
+}
+
+export interface ObservationLike {
+  density: string;
+  proximity: string;
+  vibe: string;
+}
+
+export type AmbianceLabel = 'calme' | 'modéré' | 'animé' | 'bruyant' | 'inconnu';
+
+export const DENSITY_SCORE: Record<string, number> = { Vide: 10, 'Modéré': 40, 'Fréquenté': 70, 'Bondé': 95 };
+
+export function avg(nums: number[]): number | null {
   if (!nums.length) return null;
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-function mode(values) {
+export function mode<T>(values: T[]): T | null {
   if (!values.length) return null;
-  const counts = {};
+  const counts = new Map<T, number>();
   let best = values[0];
   let bestN = 0;
   for (const v of values) {
-    counts[v] = (counts[v] || 0) + 1;
-    if (counts[v] > bestN) {
-      bestN = counts[v];
+    const n = (counts.get(v) || 0) + 1;
+    counts.set(v, n);
+    if (n > bestN) {
+      bestN = n;
       best = v;
     }
   }
@@ -22,7 +39,7 @@ function mode(values) {
 }
 
 // Étiquette d'ambiance dérivée du niveau sonore moyen.
-function ambianceLabel(noise) {
+export function ambianceLabel(noise: number | null): AmbianceLabel {
   if (noise == null) return 'inconnu';
   if (noise < 50) return 'calme';
   if (noise < 65) return 'modéré';
@@ -30,13 +47,32 @@ function ambianceLabel(noise) {
   return 'bruyant';
 }
 
-function occupancyFromDensities(densities) {
-  const scores = densities.map((d) => DENSITY_SCORE[d]).filter((n) => n != null);
+function occupancyFromDensities(densities: string[]): number | null {
+  const scores = densities.map((d) => DENSITY_SCORE[d]).filter((n): n is number => n != null);
   return avg(scores);
 }
 
+export interface NowPortrait {
+  location: string;
+  generatedAt: string;
+  window: string;
+  sampleSize: { measurements: number; observations: number };
+  score: {
+    noise: number | null;
+    occupancy: number | null;
+    vibe: string | null;
+    proximity: string | null;
+  };
+  ambianceLabel: AmbianceLabel;
+}
+
 // Portrait actuel d'un lieu sur une fenêtre donnée.
-function buildNow(location, measurements, observations, window) {
+export function buildNow(
+  location: string,
+  measurements: MeasurementLike[],
+  observations: ObservationLike[],
+  window: string
+): NowPortrait {
   const noises = measurements.filter((m) => m.type === 'noise_level').map((m) => m.value);
   const avgNoise = avg(noises);
   const densities = observations.map((o) => o.density);
@@ -56,11 +92,25 @@ function buildNow(location, measurements, observations, window) {
   };
 }
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+
+export interface QuietSlot {
+  dayOfWeek: string;
+  from: string;
+  to: string;
+  avgNoise: number;
+  samples: number;
+}
+
+interface QuietHoursOptions {
+  thresholdDb: number;
+  days: number;
+  dayOfWeek: number | null;
+}
 
 // Regroupe les mesures par (jour, créneau de 30 min) et garde celles sous le seuil.
-function buildQuietHours(measurements, { thresholdDb, days, dayOfWeek }) {
-  const buckets = {}; // key -> { sum, n, day, fromMin }
+export function buildQuietHours(measurements: MeasurementLike[], { thresholdDb, dayOfWeek }: QuietHoursOptions): QuietSlot[] {
+  const buckets: Record<string, { sum: number; n: number; day: number; fromMin: number }> = {};
   for (const m of measurements) {
     if (m.type !== 'noise_level') continue;
     const d = new Date(m.timestamp);
@@ -73,7 +123,7 @@ function buildQuietHours(measurements, { thresholdDb, days, dayOfWeek }) {
     buckets[key].sum += m.value;
     buckets[key].n += 1;
   }
-  const fmt = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+  const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
   return Object.values(buckets)
     .map((b) => ({
       dayOfWeek: DAYS[b.day],
@@ -86,9 +136,15 @@ function buildQuietHours(measurements, { thresholdDb, days, dayOfWeek }) {
     .sort((a, b) => a.avgNoise - b.avgNoise);
 }
 
+export interface HistoryBucket {
+  bucketStart: string;
+  avgNoise: number;
+  samples: number;
+}
+
 // Série temporelle agrégée par tranche (bucket).
-function buildHistory(measurements, bucketMs) {
-  const buckets = {};
+export function buildHistory(measurements: MeasurementLike[], bucketMs: number): HistoryBucket[] {
+  const buckets: Record<number, number[]> = {};
   for (const m of measurements) {
     if (m.type !== 'noise_level') continue;
     const t = new Date(m.timestamp).getTime();
@@ -101,9 +157,7 @@ function buildHistory(measurements, bucketMs) {
     .sort((a, b) => a - b)
     .map((start) => ({
       bucketStart: new Date(start).toISOString(),
-      avgNoise: Math.round(avg(buckets[start]) * 10) / 10,
+      avgNoise: Math.round((avg(buckets[start]) as number) * 10) / 10,
       samples: buckets[start].length,
     }));
 }
-
-module.exports = { buildNow, buildQuietHours, buildHistory, ambianceLabel, avg, mode, DENSITY_SCORE };

@@ -39,6 +39,13 @@ export const ambianceApi = {
     return response.data;
   },
 
+  // Récupérer les observations récentes d'un lieu (public, triées de la plus récente à la plus ancienne)
+  getObservations: async (slug, params = {}) => {
+    const queryParams = new URLSearchParams({ locationSlug: slug, ...params }).toString();
+    const response = await axios.get(`${API_BASE_URL}/observations?${queryParams}`);
+    return response.data;
+  },
+
   // Récupérer les créneaux calmes
   getQuietHours: async (slug, params = {}) => {
     const queryParams = new URLSearchParams(params).toString();

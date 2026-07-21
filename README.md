@@ -43,13 +43,14 @@ La couche client (`client/src/api/ambianceApi.js`) lit l'URL de l'API dans la va
 `http://localhost:3000/v1`.
 
 L'application client React permet de :
-- Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance
-- Consulter les détails d'un lieu (ambiance actuelle, historique, créneaux calmes)
+- Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance (nom du lieu en infobulle au survol)
+- Voir la **dernière ambiance connue** d'un lieu sans mesure récente : marqueur estompé à contour pointillé avec son ancienneté (fenêtre de fraîcheur 30 min ; au-delà de 2 h sans mesure, retour au gris « Données non disponibles » — comportement documenté sous la légende)
+- Consulter les détails d'un lieu (ambiance actuelle, historique, créneaux calmes en heure locale de Montréal groupés par jour, 5 dernières observations)
 - Créer un compte et se connecter
 - Soumettre des observations (authentifié)
 - Gérer ses lieux favoris
 
-`npm run seed` affiche les **clés API des devices** créés : copiez-en une pour tester les `POST` (en-tête `x-api-key`) et pour configurer le bridge.
+`npm run seed` affiche les **clés API des devices**. Le seed est **non destructif** : il conserve les lieux, les devices (les clés restent donc stables d'une exécution à l'autre) et les **collectes réelles** (distinguées des données simulées par `receivedAt ≈ timestamp`) ; seules les données de démonstration sont régénérées. Il synchronise aussi automatiquement `DEVICE_API_KEY` dans le `.env` avec le device correspondant à votre `LOCATION_SLUG` — aucun copier-coller nécessaire pour le bridge.
 
 ### Connexion et test des actions protégées
 
@@ -140,6 +141,10 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | GET | `/v1/ambiance/{slug}/quiet-hours` | `days?`=`7`\|`14`\|`30`, `threshold?` (dB), `dayOfWeek?`=0–6 |
 | GET | `/v1/ambiance/compare` | `locations` (slugs séparés par virgule), `window?` |
 | GET | `/v1/ambiance/{slug}/history` | `last?` ou `from`/`to`, `bucket?`=`5m`\|`15m`\|`30m`\|`1h` |
+
+Notes :
+- **`/now`** : si la fenêtre courante ne contient aucune mesure (`ambianceLabel: "inconnu"`), la réponse inclut un champ optionnel **`lastKnown`** `{ ambianceLabel, noise, asOf }` — la dernière ambiance calculable, datée — à condition que la dernière mesure ait **moins de 2 heures**. Champ optionnel, rétrocompatible.
+- **`/quiet-hours`** : les créneaux (jour + plage de 30 min) sont exprimés en **heure locale de Montréal** (`America/Montreal`, changements d'heure inclus) ; `dayOfWeek` s'interprète aussi en jour local.
 
 ### Temps réel (Phase 2, bonus SSE)
 | Méthode | Endpoint | Paramètres | Auth |
@@ -247,3 +252,7 @@ Réaliser au moins **3 sessions de 20 min** à des moments différents (ex. mati
 ## `.env.example`
 
 Le fichier `.env.example` est fourni à la racine ; copiez-le en `.env` et renseignez vos secrets (jamais committés, `.env` est dans `.gitignore`).
+
+## Dépannage : erreur `querySrv ECONNREFUSED` à la connexion MongoDB
+
+Sur certaines machines (typiquement quand un adaptateur réseau virtuel — VirtualBox, VPN — est actif), le résolveur DNS interne de Node échoue à résoudre les URI `mongodb+srv://`. Le serveur intègre un contournement automatique (`ensureSrvResolvable` dans `src/config/db.ts`) : si la résolution SRV échoue, il bascule sur des DNS publics avant de se connecter. Aucune action n'est requise ; l'URI `mongodb+srv://` d'Atlas peut être utilisée telle quelle dans le `.env`.

@@ -4,7 +4,7 @@ import Observation from '../models/Observation';
 import Location, { LocationDocument } from '../models/Location';
 import { success, errors } from '../utils/responses';
 import { parseDuration } from '../utils/time';
-import { buildNow, buildQuietHours, buildHistory, NowPortrait } from '../utils/ambiance';
+import { buildNow, buildQuietHours, buildHistory, NowPortrait, ambianceLabel, avg } from '../utils/ambiance';
 
 const router = express.Router();
 
@@ -54,7 +54,32 @@ router.get('/:locationSlug/now', async (req: Request, res: Response, next: NextF
       Measurement.find({ locationSlug: slug, timestamp: { $gte: since } }),
       Observation.find({ locationSlug: slug, timestamp: { $gte: since } }),
     ]);
-    success(res, 200, buildNow(slug, ms_, obs, windowStr));
+    const portrait = buildNow(slug, ms_, obs, windowStr);
+    // Fenêtre courante vide : on joint la dernière ambiance calculable (fenêtre de
+    // même durée se terminant à la dernière mesure), datée, pour que le client
+    // puisse afficher une information périmée plutôt que rien. Au-delà de
+    // LAST_KNOWN_MAX_AGE_MS sans mesure, l'information est jugée trop ancienne
+    // pour être utile : lastKnown est omis et le lieu redevient « données non
+    // disponibles ».
+    const LAST_KNOWN_MAX_AGE_MS = 2 * 3600e3;
+    if (portrait.ambianceLabel === 'inconnu') {
+      const latest = await Measurement.findOne({ locationSlug: slug, type: 'noise_level' }).sort({ timestamp: -1 });
+      if (latest && Date.now() - latest.timestamp.getTime() <= LAST_KNOWN_MAX_AGE_MS) {
+        const windowMs = parseDuration(windowStr) as number;
+        const lastMs = await Measurement.find({
+          locationSlug: slug,
+          type: 'noise_level',
+          timestamp: { $gte: new Date(latest.timestamp.getTime() - windowMs), $lte: latest.timestamp },
+        });
+        const lastNoise = avg(lastMs.map((m) => m.value));
+        portrait.lastKnown = {
+          ambianceLabel: ambianceLabel(lastNoise),
+          noise: lastNoise == null ? null : Math.round(lastNoise),
+          asOf: latest.timestamp.toISOString(),
+        };
+      }
+    }
+    success(res, 200, portrait);
   } catch (e) { next(e); }
 });
 

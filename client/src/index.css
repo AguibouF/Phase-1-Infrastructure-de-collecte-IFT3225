@@ -21,6 +21,14 @@
   --bruyant: #8e44ad;
   --inconnu: #7f8c8d;
 
+  /* Couleurs des vibes d'observation : une teinte distincte par valeur du
+     vocabulaire contrôlé, du plus apaisé (verts/bleus) au plus intense (rouges/violets) */
+  --vibe-concentre: #16a085;
+  --vibe-sociable: #2980b9;
+  --vibe-bruyante: #e67e22;
+  --vibe-festive: #d81b7a;
+  --vibe-tendue: #8e44ad;
+
   /* Rayons et ombres */
   --radius: 12px;
   --radius-sm: 8px;

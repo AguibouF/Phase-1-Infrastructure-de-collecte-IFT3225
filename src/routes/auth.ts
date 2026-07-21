@@ -5,6 +5,7 @@ import User from '../models/User';
 import Observation from '../models/Observation';
 import Location, { LocationDocument } from '../models/Location';
 import { success, errors, ErrorDetail } from '../utils/responses';
+import { parsePagination, paginationMeta } from '../utils/pagination';
 import { userAuth } from '../middlewares/userAuth';
 
 const router = express.Router();
@@ -218,6 +219,30 @@ router.get('/my-locations', userAuth, async (req: Request, res: Response, next: 
 
     success(res, 200, { myLocations }, {
       description: "Lieux où l'utilisateur connecté a soumis des observations, avec nombre d'écoutes et date de la dernière.",
+    });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/auth/my-observations — liste paginée des observations soumises par l'utilisateur connecté
+// Complète la Tâche 4 : « L'API permet de retrouver les observations d'un usager ».
+router.get('/my-observations', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const filter: Record<string, unknown> = {
+      author: new mongoose.Types.ObjectId(req.user?.userId),
+    };
+    if (req.query.locationSlug) filter.locationSlug = String(req.query.locationSlug).toLowerCase();
+    const { page, perPage, skip, sort } = parsePagination(req.query, {
+      maxPerPage: parseInt(process.env.MAX_PER_PAGE || '', 10) || 200,
+      defaultSort: 'timestamp:desc',
+      sortableFields: ['timestamp', 'receivedAt'],
+    });
+    const [items, total] = await Promise.all([
+      Observation.find(filter).sort(sort).skip(skip).limit(perPage),
+      Observation.countDocuments(filter),
+    ]);
+    success(res, 200, items.map((d) => d.toJSON()), {
+      ...paginationMeta(page, perPage, total),
+      description: "Observations soumises par l'utilisateur connecté, de la plus récente à la plus ancienne.",
     });
   } catch (e) { next(e); }
 });

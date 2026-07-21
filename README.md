@@ -168,8 +168,11 @@ une mesure dans un autre terminal.
 | DELETE | `/v1/auth/favorites/{locationSlug}` | — | JWT token | 200, 401 |
 | GET | `/v1/auth/favorites` | — | JWT token | 200, 401 |
 | GET | `/v1/auth/my-locations` | — | JWT token | 200, 401 |
+| GET | `/v1/auth/my-observations` | `locationSlug?, page?, perPage?, sort?` | JWT token | 200, 401 |
 
 `GET /v1/auth/my-locations` renvoie le récapitulatif des lieux où l'utilisateur connecté a soumis des observations (« ses lieux ») : nom, type, coordonnées, nombre d'observations, date de la dernière écoute et statut favori, triés de la plus récente à la plus ancienne.
+
+`GET /v1/auth/my-observations` renvoie la **liste paginée des observations** soumises par l'utilisateur connecté (filtrable par `locationSlug`), de la plus récente à la plus ancienne — l'API permet ainsi de retrouver les observations d'un usager (Tâche 4).
 
 ### Soumission d'observations utilisateur (Phase 2)
 | Méthode | Endpoint | Corps | Auth | Codes |

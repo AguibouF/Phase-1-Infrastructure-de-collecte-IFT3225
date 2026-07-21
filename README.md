@@ -1,11 +1,11 @@
 # Serveur de collecte environnementale — Ambiance des lieux
 
 Autheurs :
-- Aguibou FOFANA -- 20332292
+- Aguibou FOFANA
 
-- Mamadou TRAORE -- 20290120
+- Mamadou TRAORE
 
-- Kofi OSEL -- 20272184
+- Kofi OSEL
 
 API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`). Réalisé pour IFT3225 — Phase 1 et Phase 2.
 
@@ -196,7 +196,6 @@ L'application client React utilise l'authentification JWT pour les utilisateurs 
 - Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/auth/my-locations`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
 - Le token est stocké dans le localStorage du navigateur pour maintenir la session
 
-> **Note de conformité** : le rapport de conception (Tâche 2) mentionnait `Authorization: Bearer <apiKey>`. L'implémentation suit la consigne de la **Tâche 5** (`x-api-key`), qui est la version retenue pour la Phase 1.
 
 ## Modifications de l'infrastructure (Phase 2)
 

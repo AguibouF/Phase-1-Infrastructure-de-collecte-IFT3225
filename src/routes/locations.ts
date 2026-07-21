@@ -6,6 +6,17 @@ import { adminAuth } from '../middlewares/auth';
 
 const router = express.Router();
 
+// Valide des coordonnées optionnelles (latitude/longitude). Renvoie la liste
+// des erreurs éventuelles (vide si les deux sont absentes ou valides).
+function validateCoords(latitude?: number, longitude?: number): ErrorDetail[] {
+  const details: ErrorDetail[] = [];
+  if (latitude !== undefined && (typeof latitude !== 'number' || Number.isNaN(latitude) || latitude < -90 || latitude > 90))
+    details.push({ field: 'latitude', issue: 'out_of_range' });
+  if (longitude !== undefined && (typeof longitude !== 'number' || Number.isNaN(longitude) || longitude < -180 || longitude > 180))
+    details.push({ field: 'longitude', issue: 'out_of_range' });
+  return details;
+}
+
 // GET /v1/locations — public
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -29,11 +40,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.post('/', adminAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug, displayName, city, type } = (req.body || {}) as Record<string, string | undefined>;
+    const { latitude, longitude } = (req.body || {}) as { latitude?: number; longitude?: number };
     const missing: ErrorDetail[] = [];
     for (const [k, v] of Object.entries({ slug, displayName, city, type })) if (!v) missing.push({ field: k, issue: 'missing' });
     if (missing.length) throw errors.validation('Champs requis manquants.', missing);
+    const coordErrors = validateCoords(latitude, longitude);
+    if (coordErrors.length) throw errors.validation('Coordonnées invalides.', coordErrors);
     if (await Location.findOne({ slug: String(slug).toLowerCase() })) throw errors.conflict('LOCATION_EXISTS', 'Un lieu avec ce slug existe déjà.');
-    const loc = await Location.create({ slug, displayName, city, type });
+    const loc = await Location.create({ slug, displayName, city, type, latitude, longitude });
     success(res, 201, loc.toJSON());
   } catch (e) { next(e); }
 });
@@ -44,9 +58,14 @@ router.put('/:slug', adminAuth, async (req: Request, res: Response, next: NextFu
     const loc = await Location.findOne({ slug: String(req.params.slug).toLowerCase() });
     if (!loc) throw errors.locationNotFound();
     const { displayName, city, type } = (req.body || {}) as Record<string, string | undefined>;
+    const { latitude, longitude } = (req.body || {}) as { latitude?: number; longitude?: number };
+    const coordErrors = validateCoords(latitude, longitude);
+    if (coordErrors.length) throw errors.validation('Coordonnées invalides.', coordErrors);
     if (displayName !== undefined) loc.displayName = displayName;
     if (city !== undefined) loc.city = city;
     if (type !== undefined) loc.type = type;
+    if (latitude !== undefined) loc.latitude = latitude;
+    if (longitude !== undefined) loc.longitude = longitude;
     await loc.save();
     success(res, 200, loc.toJSON());
   } catch (e) { next(e); }

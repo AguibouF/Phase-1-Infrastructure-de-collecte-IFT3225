@@ -4,13 +4,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ambianceApi } from '../api/ambianceApi';
 
-// Fix pour les icônes Leaflet dans React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Tous les marqueurs utilisent une icône personnalisée (L.divIcon, voir
+// createCustomIcon) : inutile de charger les icônes Leaflet par défaut,
+// ce qui évite au passage toute requête vers un CDN externe.
 
 const MapView = ({ locations, onLocationClick }) => {
   const [locationsWithAmbiance, setLocationsWithAmbiance] = useState([]);

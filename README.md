@@ -1,6 +1,6 @@
 # Serveur de collecte environnementale — Ambiance des lieux
 
-Autheurs :
+Auteurs :
 - Aguibou FOFANA -- 20332292
 
 - Mamadou TRAORE -- 20290120
@@ -94,7 +94,7 @@ L'organisation sépare routes, modèles et middlewares (pas de mégafichier `ind
 ├── bridge/bridge.js         # collecte : Phyphox -> POST /v1/measurements
 ├── client/                  # Application React (Phase 2)
 │   ├── src/
-│   │   ├── components/      # Composants React : MapView, LocationDetail, LoginForm, RegisterForm
+│   │   ├── components/      # Composants React : MapView, LocationDetail, LoginForm, RegisterForm, MyLocations
 │   │   ├── api/             # API client : ambianceApi
 │   │   ├── App.jsx          # Composant principal
 │   │   ├── main.jsx         # Point d'entrée React
@@ -118,8 +118,8 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | Méthode | Endpoint | Corps / params | Auth | Codes |
 |---|---|---|---|---|
 | GET | `/v1/locations` | `city?, type?, page?, perPage?` | publique | 200 |
-| POST | `/v1/locations` | `{ slug, displayName, city, type }` | `x-api-key` admin | 201, 400, 401, 403, 409 |
-| PUT | `/v1/locations/{slug}` | `{ displayName?, city?, type? }` | `x-api-key` admin | 200, 400, 401, 403, 404 |
+| POST | `/v1/locations` | `{ slug, displayName, city, type, latitude?, longitude? }` | `x-api-key` admin | 201, 400, 401, 403, 409 |
+| PUT | `/v1/locations/{slug}` | `{ displayName?, city?, type?, latitude?, longitude? }` | `x-api-key` admin | 200, 400, 401, 403, 404 |
 
 ### Collecte (écriture, protégée par `x-api-key` device)
 | Méthode | Endpoint | Corps | Codes |
@@ -201,7 +201,7 @@ L'application client React utilise l'authentification JWT pour les utilisateurs 
 ## Modifications de l'infrastructure (Phase 2)
 
 ### Modèle Location
-Ajout des champs `latitude` et `longitude` pour stocker les coordonnées géographiques des lieux, nécessaires pour l'affichage sur la carte.
+Ajout des champs `latitude` et `longitude` pour stocker les coordonnées géographiques des lieux, nécessaires pour l'affichage sur la carte. Ces coordonnées sont **exposées par `GET /v1/locations`** et peuvent être **définies ou mises à jour via `POST`/`PUT /v1/locations`** (clé admin ; bornes validées : latitude ∈ [−90, 90], longitude ∈ [−180, 180]).
 
 ### Modèle Observation
 Ajout du champ `author` (référence au modèle User) pour lier les observations à leur auteur, permettant de suivre les contributions des utilisateurs.

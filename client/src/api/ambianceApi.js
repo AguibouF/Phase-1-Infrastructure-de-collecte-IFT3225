@@ -46,6 +46,14 @@ export const ambianceApi = {
     return response.data;
   },
 
+  // Recommandation « où aller maintenant » : tous les lieux classés du plus
+  // calme au plus animé, en direct (Tâche 1). Filtrable par ville/type.
+  getWhereToGo: async (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await axios.get(`${API_BASE_URL}/ambiance/where-to-go${queryParams ? `?${queryParams}` : ''}`);
+    return response.data;
+  },
+
   // Récupérer les créneaux calmes
   getQuietHours: async (slug, params = {}) => {
     const queryParams = new URLSearchParams(params).toString();

@@ -4,6 +4,7 @@ import LocationDetail from './components/LocationDetail';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import MyLocations from './components/MyLocations';
+import WhereToGo from './components/WhereToGo';
 import { ambianceApi } from './api/ambianceApi';
 import './App.css';
 
@@ -24,6 +25,9 @@ function App() {
 
   // Vue « Mes lieux » (lieux où l'utilisateur a soumis des observations)
   const [showMyLocations, setShowMyLocations] = useState(false);
+
+  // Vue « Où aller maintenant ? » (recommandation, Tâche 1)
+  const [showWhereToGo, setShowWhereToGo] = useState(false);
 
   // Message d'information affiché sous l'en-tête (session expirée, erreur favoris…)
   const [notice, setNotice] = useState('');
@@ -196,27 +200,44 @@ function App() {
             <button onClick={() => setAuthView('login')} className="login-button">Connexion</button>
           )}
         </div>
-        {user && (
-          <div className="filter-buttons">
-            <button
-              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setShowMyLocations(false); }}
-              className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
-            >
-              {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
-            </button>
-            <button
-              onClick={() => { setShowMyLocations(!showMyLocations); setSelectedLocation(null); }}
-              className={`filter-button ${showMyLocations ? 'active' : ''}`}
-            >
-              {showMyLocations ? 'Retour à la carte' : 'Mes lieux'}
-            </button>
-          </div>
-        )}
+        <div className="filter-buttons">
+          <button
+            onClick={() => {
+              setShowWhereToGo(!showWhereToGo);
+              setSelectedLocation(null);
+              setShowMyLocations(false);
+            }}
+            className={`filter-button ${showWhereToGo ? 'active' : ''}`}
+          >
+            {showWhereToGo ? 'Retour à la carte' : 'Où aller ?'}
+          </button>
+          {user && (
+            <>
+              <button
+                onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setShowMyLocations(false); setShowWhereToGo(false); }}
+                className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
+              >
+                {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
+              </button>
+              <button
+                onClick={() => { setShowMyLocations(!showMyLocations); setSelectedLocation(null); setShowWhereToGo(false); }}
+                className={`filter-button ${showMyLocations ? 'active' : ''}`}
+              >
+                {showMyLocations ? 'Retour à la carte' : 'Mes lieux'}
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {notice && <div className="notice-banner">{notice}</div>}
 
-      {user && showMyLocations && !selectedLocation ? (
+      {showWhereToGo && !selectedLocation ? (
+        <WhereToGo
+          locations={locations}
+          onLocationClick={(loc) => { setShowWhereToGo(false); setSelectedLocation(loc); }}
+        />
+      ) : user && showMyLocations && !selectedLocation ? (
         <MyLocations
           token={token}
           favorites={favorites}

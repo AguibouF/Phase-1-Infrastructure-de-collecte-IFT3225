@@ -820,3 +820,162 @@
     align-items: flex-start;
   }
 }
+
+/* ---------- Où aller maintenant ? (Tâche 1) ---------- */
+.where-to-go {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.wtg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.wtg-subtitle {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.wtg-window {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.wtg-window select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.wtg-best {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.wtg-best strong { font-size: 17px; color: var(--ink); }
+
+.wtg-best-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wtg-chip, .wtg-chip-sm {
+  color: #fff;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 13px;
+}
+
+.wtg-chip-sm { font-size: 12px; }
+
+.wtg-noise {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wtg-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wtg-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.wtg-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.wtg-rank {
+  font-weight: 700;
+  color: var(--ink-soft);
+  width: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.wtg-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wtg-name { flex: 1; color: var(--ink); font-weight: 500; }
+.wtg-type { color: var(--ink-soft); font-weight: 400; font-size: 13px; }
+
+.wtg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wtg-empty, .wtg-unknown h4 {
+  color: var(--ink-soft);
+}
+
+.wtg-unknown {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.wtg-unknown h4 { margin-bottom: 8px; font-size: 14px; }
+
+.wtg-unknown ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wtg-unknown li {
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.wtg-unknown li:hover { border-color: var(--accent); color: var(--accent); }

@@ -5,6 +5,7 @@ import Location, { LocationDocument } from '../models/Location';
 import { success, errors } from '../utils/responses';
 import { parseDuration } from '../utils/time';
 import { buildNow, buildQuietHours, buildHistory, NowPortrait, ambianceLabel, avg } from '../utils/ambiance';
+import { rankByAmbiance } from '../services/ambianceService';
 
 const router = express.Router();
 
@@ -14,6 +15,64 @@ async function ensureLocation(slug: string): Promise<LocationDocument> {
   return loc;
 }
 
+// Construit le portrait actuel de plusieurs lieux sur une même fenêtre.
+async function portraitsForLocations(locs: LocationDocument[], windowStr: string): Promise<NowPortrait[]> {
+  const ms = parseDuration(windowStr) as number;
+  const since = new Date(Date.now() - ms);
+  const portraits: NowPortrait[] = [];
+  for (const loc of locs) {
+    const [measurements, observations] = await Promise.all([
+      Measurement.find({ locationSlug: loc.slug, timestamp: { $gte: since } }),
+      Observation.find({ locationSlug: loc.slug, timestamp: { $gte: since } }),
+    ]);
+    portraits.push(buildNow(loc.slug, measurements, observations, windowStr));
+  }
+  return portraits;
+}
+
+// GET /v1/ambiance/where-to-go?window=30m&city=montreal&type=cafeteria
+// Tâche 1 : recommande où aller MAINTENANT en classant tous les lieux (filtrables
+// par ville/type) du plus calme au plus animé, en direct. Réutilise le service
+// pur `rankByAmbiance` (testé) et enrichit chaque entrée du nom d'affichage et
+// des coordonnées pour l'UI.
+router.get('/where-to-go', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const windowStr = String(req.query.window || '30m');
+    if (!['15m', '30m', '1h'].includes(windowStr)) {
+      throw errors.validation('window doit être 15m, 30m ou 1h.', [{ field: 'window', issue: 'invalid' }]);
+    }
+    const filter: Record<string, string> = {};
+    if (req.query.city) filter.city = String(req.query.city).toLowerCase();
+    if (req.query.type) filter.type = String(req.query.type).toLowerCase();
+
+    const locs = await Location.find(filter);
+    const bySlug = new Map(locs.map((l) => [l.slug, l]));
+    const portraits = await portraitsForLocations(locs, windowStr);
+    const { ranked, unknown, quietest, busiest } = rankByAmbiance(portraits);
+
+    // Enrichit un portrait des métadonnées du lieu pour l'affichage client.
+    const enrich = (p: NowPortrait) => {
+      const loc = bySlug.get(p.location);
+      return {
+        ...p,
+        displayName: loc?.displayName ?? p.location,
+        type: loc?.type ?? null,
+        latitude: loc?.latitude ?? null,
+        longitude: loc?.longitude ?? null,
+      };
+    };
+
+    success(res, 200, {
+      window: windowStr,
+      count: ranked.length,
+      ranked: ranked.map(enrich),
+      unknown: unknown.map(enrich),
+      quietest,
+      busiest,
+    });
+  } catch (e) { next(e); }
+});
+
 // GET /v1/ambiance/compare?locations=a,b,c&window=30m
 // Déclaré avant les routes paramétrées pour éviter la capture par :locationSlug.
 router.get('/compare', async (req: Request, res: Response, next: NextFunction) => {
@@ -21,23 +80,18 @@ router.get('/compare', async (req: Request, res: Response, next: NextFunction) =
     if (!req.query.locations) throw errors.validation('Paramètre "locations" requis (slugs séparés par des virgules).', [{ field: 'locations', issue: 'missing' }]);
     const slugs = String(req.query.locations).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
     const windowStr = String(req.query.window || '30m');
-    const ms = parseDuration(windowStr);
-    if (!ms) throw errors.validation('window invalide (ex: 15m, 30m, 1h).', [{ field: 'window', issue: 'invalid' }]);
-    const since = new Date(Date.now() - ms);
+    if (!parseDuration(windowStr)) throw errors.validation('window invalide (ex: 15m, 30m, 1h).', [{ field: 'window', issue: 'invalid' }]);
 
-    const results: NowPortrait[] = [];
+    const locs: LocationDocument[] = [];
     for (const slug of slugs) {
       const loc = await Location.findOne({ slug });
       if (!loc) throw errors.locationNotFound(`Lieu inconnu: ${slug}`);
-      const [ms_, obs] = await Promise.all([
-        Measurement.find({ locationSlug: slug, timestamp: { $gte: since } }),
-        Observation.find({ locationSlug: slug, timestamp: { $gte: since } }),
-      ]);
-      results.push(buildNow(slug, ms_, obs, windowStr));
+      locs.push(loc);
     }
-    const ranked = results.filter((r) => r.score.noise != null);
-    const quietest = ranked.length ? ranked.reduce((a, b) => ((b.score.noise as number) < (a.score.noise as number) ? b : a)).location : null;
-    const busiest = ranked.length ? ranked.reduce((a, b) => ((b.score.noise as number) > (a.score.noise as number) ? b : a)).location : null;
+    const results = await portraitsForLocations(locs, windowStr);
+    // Classement calculé par le service pur testé (rankByAmbiance) ; `results`
+    // reste dans l'ordre demandé par le client.
+    const { quietest, busiest } = rankByAmbiance(results);
     success(res, 200, { window: windowStr, locations: results, quietest, busiest });
   } catch (e) { next(e); }
 });

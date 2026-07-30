@@ -14,5 +14,5 @@
     "declaration": false
   },
   "include": ["index.ts", "src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "client", "scripts", "bridge"]
+  "exclude": ["node_modules", "dist", "client", "scripts", "bridge", "tests"]
 }

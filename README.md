@@ -166,6 +166,17 @@ existante** : la fonction pure `rankByAmbiance` (partagée avec `/compare` et
 couverte par les tests) et le bus d'événements SSE. Gain d'expérience important
 pour très peu de code neuf.
 
+### Effet « prise en direct » sur la carte
+
+Pendant une collecte, dès qu'une mesure ou une observation arrive en temps réel
+(SSE), le lieu concerné réagit visuellement sur la carte pendant quelques
+secondes : **anneau qui se propage** autour du marqueur (couleur de l'ambiance),
+**légère vibration** du point, **badge « Prise en direct »** listant le(s) lieu(x)
+en captation, et **retour haptique** (`navigator.vibrate`) sur mobile compatible.
+L'effet s'éteint automatiquement après ~4 s et respecte la préférence système
+`prefers-reduced-motion`. Il matérialise concrètement le flux temps réel et rend
+une session de collecte lisible d'un coup d'œil.
+
 ## Table des endpoints
 
 Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, data, meta }` ; enveloppe d'erreur : `{ status:"error", error:{ code, message, details? }, meta }`.
@@ -330,6 +341,7 @@ la mise en cache par les navigateurs et proxys.
 - **Requêtes parallélisées** (`Promise.all`) pour lire mesures et observations d'un lieu simultanément ([ambiance.ts](src/routes/ambiance.ts), [LocationDetail.jsx](client/src/components/LocationDetail.jsx)).
 - **Pagination bornée** (`perPage` plafonné par `MAX_PER_PAGE`) et **rate limiting** (130 req/min par défaut) pour protéger le serveur.
 - **Temps réel par push (SSE)** plutôt que polling : seul le lieu concerné est rafraîchi à chaque nouvelle donnée.
+- **Code-splitting** (`React.lazy` + `Suspense`) : la carte (Leaflet) et le détail (Chart.js) sont chargés à la demande dans des chunks séparés. Le bundle initial passe de ~587 kB à ~251 kB, et Chart.js n'est chargé qu'à l'ouverture d'un lieu.
 
 **Maintenabilité / réutilisabilité**
 - Logique métier **pure et isolée** (`src/services/`, `src/utils/`), découplée de Mongoose et d'Express → testée (27 tests unitaires) et **réutilisée** par les routes ET la fonctionnalité « Où aller ? » (`rankByAmbiance` partagé entre `/compare` et `/where-to-go`).
@@ -338,7 +350,6 @@ la mise en cache par les navigateurs et proxys.
 ### Faiblesses restantes
 
 - **Faille volontaire `POST /devices` non authentifié** (documentée plus haut) : toujours présente, non corrigée par choix pédagogique. Correctif connu : ajouter le middleware `adminAuth`.
-- **Bundle frontend volumineux (> 500 kB)** : Leaflet et Chart.js sont chargés au démarrage, sans *code-splitting*. Piste : imports dynamiques (`React.lazy`) pour la carte et les graphiques.
 - **Cache serveur en mémoire du processus** : perdu au redémarrage et non partagé en cas de *scaling horizontal* (plusieurs instances). Piste : Redis pour un cache distribué.
 - **Tension cache / temps réel** : un rafraîchissement déclenché par un événement SSE **d'un autre client** peut servir des données périmées jusqu'au TTL (≤ 30 s), car l'invalidation frontend ne se déclenche que sur les écritures locales.
 - **Requêtes N+1 dans `/where-to-go` et `/compare`** : une paire de requêtes par lieu (boucle) plutôt qu'une agrégation groupée. Acceptable au volume actuel (peu de lieux), à revoir si le nombre de lieux croît fortement.

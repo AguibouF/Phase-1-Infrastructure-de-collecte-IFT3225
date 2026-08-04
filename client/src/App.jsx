@@ -1,10 +1,15 @@
-import MapView from './components/MapView';
-import LocationDetail from './components/LocationDetail';
+import { lazy, Suspense } from 'react';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
-import MyLocations from './components/MyLocations';
-import WhereToGo from './components/WhereToGo';
 import { Loading, ErrorMessage } from './components/common/StateMessage';
+
+// Composants lourds chargés à la demande (code-splitting) : la carte embarque
+// Leaflet, le détail embarque Chart.js. Les séparer allège le bundle initial et
+// ne charge Chart.js que lorsqu'un lieu est ouvert.
+const MapView = lazy(() => import('./components/MapView'));
+const LocationDetail = lazy(() => import('./components/LocationDetail'));
+const MyLocations = lazy(() => import('./components/MyLocations'));
+const WhereToGo = lazy(() => import('./components/WhereToGo'));
 import { useLocations } from './hooks/useLocations';
 import { useAuth } from './context/AuthContext';
 import { useFavorites } from './context/FavoritesContext';
@@ -105,18 +110,20 @@ function App() {
 
       {notice && <div className="notice-banner">{notice}</div>}
 
-      {selectedLocation ? (
-        <LocationDetail location={selectedLocation} onBack={clearLocation} />
-      ) : view === 'where-to-go' ? (
-        <WhereToGo locations={locations} onLocationClick={selectLocation} />
-      ) : view === 'my-locations' && isAuthenticated ? (
-        <MyLocations onLocationSelect={openLocationBySlug} />
-      ) : (
-        <div className="map-section">
-          <h2>Carte des lieux {showFavoritesOnly ? '(Favoris)' : ''}</h2>
-          <MapView locations={filteredLocations} onLocationClick={selectLocation} />
-        </div>
-      )}
+      <Suspense fallback={<Loading message="Chargement…" />}>
+        {selectedLocation ? (
+          <LocationDetail location={selectedLocation} onBack={clearLocation} />
+        ) : view === 'where-to-go' ? (
+          <WhereToGo locations={locations} onLocationClick={selectLocation} />
+        ) : view === 'my-locations' && isAuthenticated ? (
+          <MyLocations onLocationSelect={openLocationBySlug} />
+        ) : (
+          <div className="map-section">
+            <h2>Carte des lieux {showFavoritesOnly ? '(Favoris)' : ''}</h2>
+            <MapView locations={filteredLocations} onLocationClick={selectLocation} />
+          </div>
+        )}
+      </Suspense>
     </div>
   );
 }

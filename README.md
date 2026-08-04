@@ -2,12 +2,10 @@
 
 Auteurs :
 - Aguibou FOFANA
-
 - Mamadou TRAORE
-
 - Kofi OSEL
 
-API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`, `where-to-go`). Réalisé pour IFT3225 — Phases 1 à 3.
+API REST (Express + MongoDB Atlas) qui collecte des **mesures** sonores (capteur Phyphox) et des **observations** humaines pour évaluer l'**ambiance** d'un lieu (calme, modéré, animé, bruyant). Le projet expose les ressources persistées (`devices`, `locations`, `measurements`, `observations`) et des **vues sémantiques calculées** (`ambiance/now`, `quiet-hours`, `compare`, `history`, `where-to-go`), avec une application cliente React (carte, détail des lieux, comptes utilisateurs, temps réel). Réalisé pour le cours IFT3225.
 
 ## Prérequis
 
@@ -24,12 +22,12 @@ npm run seed                # (optionnel) peuple la base de données de démo
 npm start                   # compile le TypeScript puis démarre le serveur sur http://localhost:3000
 ```
 
-> **Bonus Phase 2 — backend TypeScript** : le serveur est écrit en TypeScript
-> (`index.ts`, `src/**/*.ts`) avec typage complet du modèle (interfaces Mongoose),
-> de la couche données et des routes. `npm start` compile automatiquement
+> **Backend TypeScript** : le serveur est écrit en TypeScript (`index.ts`,
+> `src/**/*.ts`) avec typage complet du modèle (interfaces Mongoose), de la
+> couche données et des routes. `npm start` compile automatiquement
 > (`npm run build` = `tsc`) vers `dist/` avant de démarrer.
 
-### Application client React (Phase 2)
+### Application client React
 
 ```bash
 cd client                   # aller dans le dossier client
@@ -42,9 +40,10 @@ La couche client (`client/src/api/ambianceApi.js`) lit l'URL de l'API dans la va
 `VITE_API_URL` (fichier `client/.env`, voir `client/.env.example`). Par défaut :
 `http://localhost:3000/v1`.
 
-L'application client React permet de :
+L'application client permet de :
 - Visualiser la carte des lieux avec marqueurs colorés selon l'ambiance (nom du lieu en infobulle au survol)
 - Voir la **dernière ambiance connue** d'un lieu sans mesure récente : marqueur estompé à contour pointillé avec son ancienneté (fenêtre de fraîcheur 30 min ; au-delà de 2 h sans mesure, retour au gris « Données non disponibles » — comportement documenté sous la légende)
+- Comparer les lieux en direct via **« Où aller ? »** (du plus calme au plus animé)
 - Consulter les détails d'un lieu (ambiance actuelle, historique, créneaux calmes en heure locale de Montréal groupés par jour, 5 dernières observations)
 - Créer un compte et se connecter
 - Soumettre des observations (authentifié)
@@ -52,7 +51,7 @@ L'application client React permet de :
 
 `npm run seed` affiche les **clés API des devices**. Le seed est **non destructif** : il conserve les lieux, les devices (les clés restent donc stables d'une exécution à l'autre) et les **collectes réelles** (distinguées des données simulées par `receivedAt ≈ timestamp`) ; seules les données de démonstration sont régénérées. Il synchronise aussi automatiquement `DEVICE_API_KEY` dans le `.env` avec le device correspondant à votre `LOCATION_SLUG` — aucun copier-coller nécessaire pour le bridge.
 
-### Tests unitaires (Phase 3 — Tâche 3)
+### Tests unitaires
 
 Les **services métier** du backend sont couverts par des tests unitaires
 (**Vitest**), exécutables **sans base de données ni serveur** (fonctions pures).
@@ -68,17 +67,6 @@ classement « où aller »), les utilitaires de temps (`parseDuration`,
 `buildTimeWindow`) et le middleware de cache (HIT/MISS, invalidation). Tous les
 tests passent sur le code livré et déployé.
 
-### Connexion et test des actions protégées
-
-1. Lancez le backend (`npm start`) puis le client (`cd client && npm run dev`) et ouvrez `http://localhost:5173`.
-2. Cliquez sur **Connexion** puis **Créer un compte** (nom d'utilisateur, courriel, mot de passe d'au moins 6 caractères). La connexion est automatique après l'inscription et l'en-tête affiche « Bonjour, \<utilisateur\> ».
-3. Une fois connecté, testez les actions protégées :
-   - ouvrez un lieu depuis la carte → **+ Nouvelle observation** → remplissez et soumettez : l'observation est liée à votre compte (champ `author`) et horodatée côté serveur ;
-   - **☆ Ajouter aux favoris** dans la vue détaillée, puis utilisez le filtre **Mes favoris** sur la carte ;
-   - ouvrez **Mes lieux** pour voir le récapitulatif de vos contributions (nombre d'observations, dernière écoute).
-4. Vérifiez le refus sans authentification : `POST /v1/observations/user` sans en-tête `Authorization` renvoie **401** `NO_TOKEN` (testable via la collection Postman ou `curl`).
-5. Cliquez sur **Déconnexion** : le formulaire d'observation, les favoris et « Mes lieux » disparaissent de l'interface ; si le token expire (7 jours), l'application déconnecte automatiquement et invite à se reconnecter.
-
 ### Variables d'environnement (`.env`)
 
 | Variable | Rôle |
@@ -91,7 +79,20 @@ tests passent sur le code livré et déployé.
 | `RATE_LIMIT_PER_MIN` | Limite de requêtes/min (défaut 130) |
 | `MAX_PER_PAGE` | Pagination max (défaut 200) |
 
-## Déploiement (Phase 3 — Tâche 5)
+Le fichier `.env.example` est fourni à la racine ; copiez-le en `.env` et renseignez vos secrets (jamais committés, `.env` est dans `.gitignore`).
+
+### Connexion et test des actions protégées
+
+1. Lancez le backend (`npm start`) puis le client (`cd client && npm run dev`) et ouvrez `http://localhost:5173`.
+2. Cliquez sur **Connexion** puis **Créer un compte** (nom d'utilisateur, courriel, mot de passe d'au moins 6 caractères). La connexion est automatique après l'inscription et l'en-tête affiche « Bonjour, \<utilisateur\> ».
+3. Une fois connecté, testez les actions protégées :
+   - ouvrez un lieu depuis la carte → **+ Nouvelle observation** → remplissez et soumettez : l'observation est liée à votre compte (champ `author`) et horodatée côté serveur ;
+   - **☆ Ajouter aux favoris** dans la vue détaillée, puis utilisez le filtre **Mes favoris** sur la carte ;
+   - ouvrez **Mes lieux** pour voir le récapitulatif de vos contributions (nombre d'observations, dernière écoute).
+4. Vérifiez le refus sans authentification : `POST /v1/observations/user` sans en-tête `Authorization` renvoie **401** `NO_TOKEN` (testable via la collection Postman ou `curl`).
+5. Cliquez sur **Déconnexion** : le formulaire d'observation, les favoris et « Mes lieux » disparaissent de l'interface ; si le token expire (7 jours), l'application déconnecte automatiquement et invite à se reconnecter.
+
+## Déploiement (Render)
 
 L'application est déployée sur **Render** en deux services (voir le Blueprint
 [`render.yaml`](render.yaml) qui les décrit) :
@@ -115,38 +116,55 @@ dynamiques). Sur le plan gratuit, le backend s'endort après ~15 min d'inactivit
 
 ## Architecture
 
-L'organisation sépare routes, modèles et middlewares (pas de mégafichier `index.js`) :
+L'organisation sépare routes, services, modèles et middlewares (pas de mégafichier `index.js`) :
 
 ```
 ├── index.ts                 # point d'entrée backend (TypeScript) : connecte la DB puis démarre Express
 ├── tsconfig.json            # configuration TypeScript (compilation vers dist/)
-├── render.yaml              # Blueprint de déploiement Render (backend + frontend) — Phase 3
+├── render.yaml              # Blueprint de déploiement Render (backend + frontend)
 ├── src/
 │   ├── app.ts               # construction de l'app Express (middlewares + montage des routes)
 │   ├── config/db.ts         # connexion Mongoose à MongoDB Atlas (URI via .env)
 │   ├── models/              # schémas Mongoose typés : Device, Location, Measurement, Observation, User
 │   ├── middlewares/         # auth (x-api-key), userAuth (JWT), rate limit, cache, gestion d'erreurs
 │   ├── routes/              # devices, locations, measurements, observations, ambiance, auth, events (SSE)
-│   ├── services/            # logique métier pure et testable : ambianceService, cacheService (Phase 3)
+│   ├── services/            # logique métier pure et testable : ambianceService, cacheService
 │   ├── types/               # augmentations de types Express (req.device, req.user)
 │   └── utils/               # enveloppe de réponse, pagination, fenêtres temporelles, calculs d'ambiance, bus d'événements
-├── tests/                   # tests unitaires Vitest (services, temps, cache) — Phase 3
+├── tests/                   # tests unitaires Vitest (services, temps, cache)
 ├── scripts/seed.js          # peuplement de données de démonstration
 ├── bridge/bridge.js         # collecte : Phyphox -> POST /v1/measurements
-├── client/                  # Application React (Phase 2, enrichie Phase 3)
+├── client/                  # application React
 │   ├── src/
 │   │   ├── components/      # MapView, LocationDetail, WhereToGo, MyLocations, LoginForm, RegisterForm, common/StateMessage
-│   │   ├── context/        # contextes React : AuthContext, FavoritesContext (Phase 3)
-│   │   ├── hooks/          # hooks personnalisés : useLocations (Phase 3)
-│   │   ├── store/          # store Zustand : uiStore — navigation + notifications (Phase 3)
+│   │   ├── context/        # contextes React : AuthContext, FavoritesContext
+│   │   ├── hooks/          # hooks personnalisés : useLocations
+│   │   ├── store/          # store Zustand : uiStore — navigation + notifications
 │   │   ├── api/            # API client : ambianceApi (avec cache)
-│   │   ├── utils/          # utilitaires partagés : ambiance (couleurs/libellés), cache (Phase 3)
+│   │   ├── utils/          # utilitaires partagés : ambiance (couleurs/libellés), cache
 │   │   ├── App.jsx          # orchestrateur principal
 │   │   ├── main.jsx         # point d'entrée React (montage des providers)
 │   │   └── App.css          # styles globaux
 │   └── package.json         # dépendances frontend
 └── postman/                 # collection Postman de test
 ```
+
+## Fonctionnalité additionnelle — « Où aller ? »
+
+Un bouton **« Où aller ? »** (visible connecté ou non) ouvre une vue qui classe
+**tous les lieux du plus calme au plus animé, en direct**, met en avant le lieu
+**recommandé**, et permet de choisir la fenêtre d'analyse (15 min / 30 min / 1 h).
+La liste se rafraîchit automatiquement via SSE. Elle s'appuie sur l'endpoint
+`GET /v1/ambiance/where-to-go`.
+
+**Justification.** Le vrai besoin de l'utilisateur n'est pas « quelle est
+l'ambiance du lieu X ? » mais « **où puis-je aller maintenant ?** ». Auparavant,
+il fallait ouvrir chaque lieu un par un sur la carte pour comparer. La
+fonctionnalité répond directement à cette décision, reste pleinement dans le
+domaine de l'application (l'ambiance des lieux) et **réutilise l'infrastructure
+existante** : la fonction pure `rankByAmbiance` (partagée avec `/compare` et
+couverte par les tests) et le bus d'événements SSE. Gain d'expérience important
+pour très peu de code neuf.
 
 ## Table des endpoints
 
@@ -185,14 +203,14 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 | GET | `/v1/ambiance/{slug}/now` | `window?` = `15m`\|`30m`\|`1h` (défaut `30m`) |
 | GET | `/v1/ambiance/{slug}/quiet-hours` | `days?`=`7`\|`14`\|`30`, `threshold?` (dB), `dayOfWeek?`=0–6 |
 | GET | `/v1/ambiance/compare` | `locations` (slugs séparés par virgule), `window?` |
-| GET | `/v1/ambiance/where-to-go` | `window?`=`15m`\|`30m`\|`1h`, `city?`, `type?` — classe tous les lieux du plus calme au plus animé (Phase 3, Tâche 1) |
+| GET | `/v1/ambiance/where-to-go` | `window?`=`15m`\|`30m`\|`1h`, `city?`, `type?` — classe tous les lieux du plus calme au plus animé |
 | GET | `/v1/ambiance/{slug}/history` | `last?` ou `from`/`to`, `bucket?`=`5m`\|`15m`\|`30m`\|`1h` |
 
 Notes :
 - **`/now`** : si la fenêtre courante ne contient aucune mesure (`ambianceLabel: "inconnu"`), la réponse inclut un champ optionnel **`lastKnown`** `{ ambianceLabel, noise, asOf }` — la dernière ambiance calculable, datée — à condition que la dernière mesure ait **moins de 2 heures**. Champ optionnel, rétrocompatible.
 - **`/quiet-hours`** : les créneaux (jour + plage de 30 min) sont exprimés en **heure locale de Montréal** (`America/Montreal`, changements d'heure inclus) ; `dayOfWeek` s'interprète aussi en jour local.
 
-### Temps réel (Phase 2, bonus SSE)
+### Temps réel (SSE)
 | Méthode | Endpoint | Paramètres | Auth |
 |---|---|---|---|
 | GET | `/v1/events` | `locationSlug?` (filtre sur un lieu) | publique |
@@ -205,7 +223,7 @@ rafraîchir le marqueur du lieu concerné sur la carte et le portrait détaillé
 détaillée). Test rapide : `curl -N http://localhost:3000/v1/events` puis postez
 une mesure dans un autre terminal.
 
-### Authentification utilisateur (Phase 2)
+### Authentification utilisateur
 | Méthode | Endpoint | Corps | Auth | Codes |
 |---|---|---|---|---|
 | POST | `/v1/auth/register` | `{ username, email, password }` | publique | 201, 400, 409 |
@@ -217,16 +235,16 @@ une mesure dans un autre terminal.
 
 `GET /v1/auth/my-locations` renvoie le récapitulatif des lieux où l'utilisateur connecté a soumis des observations (« ses lieux ») : nom, type, coordonnées, nombre d'observations, date de la dernière écoute et statut favori, triés de la plus récente à la plus ancienne.
 
-### Soumission d'observations utilisateur (Phase 2)
+### Soumission d'observations utilisateur
 | Méthode | Endpoint | Corps | Auth | Codes |
 |---|---|---|---|---|
 | POST | `/v1/observations/user` | `{ locationSlug, density, proximity, vibe, notes? }` | JWT token | 201, 400, 401, 404 |
 
 **Valeurs validées** : `type=noise_level`, `unit=dB`, `value` ∈ [0,140] ; `density` ∈ {Vide, Modéré, Fréquenté, Bondé} ; `vibe` ∈ {Calme, Concentré, Sociable, Bruyante, Festive, Tendue} ; `proximity` ∈ {Isolé, Espacé, Fréquenté, Serré}. Combiner `last` avec `from`/`to` renvoie `400`.
 
-## Authentification (Phase 1 et Phase 2)
+## Authentification
 
-### Authentification device (Phase 1)
+### Authentification device
 Les endpoints d'**écriture** (`POST /measurements`, `POST /observations`, `POST /measurements/batch`) sont protégés par une clé API transmise dans l'en-tête **`x-api-key`**. Le serveur vérifie qu'elle correspond à un device enregistré :
 
 - **401** `MISSING_AUTH` — en-tête absent
@@ -235,54 +253,35 @@ Les endpoints d'**écriture** (`POST /measurements`, `POST /observations`, `POST
 
 Les requêtes de **lecture** (`GET`) restent **publiques**. Les endpoints de gestion (`DELETE /devices`, `POST`/`PUT /locations`) utilisent une **clé d'administration** (`ADMIN_API_KEY`), via le même en-tête `x-api-key`.
 
-### Authentification utilisateur (Phase 2)
-L'application client React utilise l'authentification JWT pour les utilisateurs :
-- **POST /v1/auth/register** : Création d'un compte utilisateur
-- **POST /v1/auth/login** : Connexion et obtention d'un token JWT
+### Authentification utilisateur (JWT)
+L'application client utilise l'authentification JWT pour les utilisateurs :
+- **POST /v1/auth/register** : création d'un compte utilisateur
+- **POST /v1/auth/login** : connexion et obtention d'un token JWT
 - Les endpoints utilisateur (`/v1/auth/favorites`, `/v1/auth/my-locations`, `/v1/observations/user`) sont protégés par le middleware `userAuth` qui vérifie le token JWT dans l'en-tête `Authorization: Bearer <token>`
 - Le token est stocké dans le localStorage du navigateur pour maintenir la session
 
-
-## Modifications de l'infrastructure (Phase 2)
+## Modèles de données
 
 ### Modèle Location
-Ajout des champs `latitude` et `longitude` pour stocker les coordonnées géographiques des lieux, nécessaires pour l'affichage sur la carte.
+Champs `latitude` et `longitude` : coordonnées géographiques des lieux, nécessaires à l'affichage sur la carte.
 
 ### Modèle Observation
-Ajout du champ `author` (référence au modèle User) pour lier les observations à leur auteur, permettant de suivre les contributions des utilisateurs.
+Champ `author` (référence au modèle User) : lie chaque observation à son auteur, pour suivre les contributions des utilisateurs.
 
-### Modèle User (nouveau)
-Création du modèle User pour gérer l'authentification des utilisateurs :
+### Modèle User
+Gère l'authentification des utilisateurs :
 - `username` : nom d'utilisateur unique
 - `email` : email unique
 - `password` : mot de passe hashé avec bcrypt
 - `favoriteLocations` : tableau des slugs des lieux favoris
 
-### Endpoints ambiance
-Les endpoints sémantiques (`/v1/ambiance/{slug}/now`, etc.) exposent maintenant le champ `ambianceLabel` pour indiquer la classification de l'ambiance (calme, modéré, animé, inconnu).
+### Champ `ambianceLabel`
+Les endpoints sémantiques (`/v1/ambiance/{slug}/now`, etc.) exposent le champ `ambianceLabel` indiquant la classification de l'ambiance (calme, modéré, animé, bruyant, inconnu).
 
 ### Faille volontaire : `POST /devices` non protégé
+`POST /devices` n'exige **aucune** authentification : n'importe qui peut créer un device et obtenir une `apiKey` valide, donc pousser de fausses mesures et fausser les vues sémantiques (et, par volume, déclencher le rate-limit pour les autres). **Solution proposée** : exiger la clé d'administration (`x-api-key` admin) sur `POST /devices`, comme pour les autres endpoints de gestion — le middleware `adminAuth` existe déjà et il suffit de l'ajouter à la route. Compléments envisageables : enrôlement par jeton d'invitation à usage unique, ou validation d'un compte propriétaire avant émission de la clé.
 
-En Phase 1, `POST /devices` n'exige **aucune** authentification : n'importe qui peut créer un device et obtenir une `apiKey` valide, donc pousser de fausses mesures et fausser les vues sémantiques (et, par volume, déclencher le rate-limit pour les autres). **Solution proposée** : exiger la clé d'administration (`x-api-key` admin) sur `POST /devices`, comme pour les autres endpoints de gestion — le middleware `adminAuth` existe déjà et il suffit de l'ajouter à la route. Compléments envisageables : enrôlement par jeton d'invitation à usage unique, ou validation d'un compte propriétaire avant émission de la clé.
-
-## Fonctionnalité additionnelle — « Où aller ? » (Phase 3 — Tâche 1)
-
-Un bouton **« Où aller ? »** (visible connecté ou non) ouvre une vue qui classe
-**tous les lieux du plus calme au plus animé, en direct**, met en avant le lieu
-**recommandé**, et permet de choisir la fenêtre d'analyse (15 min / 30 min / 1 h).
-La liste se rafraîchit automatiquement via SSE. Elle s'appuie sur le nouvel
-endpoint `GET /v1/ambiance/where-to-go`.
-
-**Justification.** Le vrai besoin de l'utilisateur n'est pas « quelle est
-l'ambiance du lieu X ? » mais « **où puis-je aller maintenant ?** ». Auparavant,
-il fallait ouvrir chaque lieu un par un sur la carte pour comparer. La
-fonctionnalité répond directement à cette décision, reste pleinement dans le
-domaine de l'application (l'ambiance des lieux) et **réutilise l'infrastructure
-existante** : la fonction pure `rankByAmbiance` (partagée avec `/compare` et
-couverte par les tests) et le bus d'événements SSE. Gain d'expérience important
-pour très peu de code neuf.
-
-## Stratégie de cache (Phase 3 — Tâche 4)
+## Stratégie de cache
 
 Le cache est mis en œuvre **des deux côtés**, avec des rôles complémentaires : le
 frontend évite les allers-retours réseau, le backend évite de recalculer les
@@ -314,13 +313,14 @@ la mise en cache par les navigateurs et proxys.
 - L'**authentification** (`/v1/auth/*` : register, login, favoris, `my-locations`) — données par utilisateur / sensibles : middleware [`noCache`](src/middlewares/cache.ts) côté serveur, exclusion explicite `/auth/` côté client.
 - Le **flux temps réel** SSE (`/v1/events`) — par nature non cacheable.
 
-> **Limite connue** (voir aussi Tâche 6) : un rafraîchissement déclenché par un
-> événement SSE **provenant d'un autre client** peut être servi depuis le cache
-> local pendant la durée du TTL (jusqu'à 30 s pour l'ambiance), car
-> l'invalidation frontend ne se déclenche que sur les écritures **de ce
-> navigateur**. Le délai reste borné par le TTL court des vues temps réel.
+> **Limite connue** (voir aussi « Optimisations & faiblesses ») : un
+> rafraîchissement déclenché par un événement SSE **provenant d'un autre client**
+> peut être servi depuis le cache local pendant la durée du TTL (jusqu'à 30 s
+> pour l'ambiance), car l'invalidation frontend ne se déclenche que sur les
+> écritures **de ce navigateur**. Le délai reste borné par le TTL court des vues
+> temps réel.
 
-## Optimisations & faiblesses restantes (Phase 3 — Tâche 6)
+## Optimisations & faiblesses restantes
 
 ### Optimisations mises en place
 
@@ -331,13 +331,13 @@ la mise en cache par les navigateurs et proxys.
 - **Pagination bornée** (`perPage` plafonné par `MAX_PER_PAGE`) et **rate limiting** (130 req/min par défaut) pour protéger le serveur.
 - **Temps réel par push (SSE)** plutôt que polling : seul le lieu concerné est rafraîchi à chaque nouvelle donnée.
 
-**Maintenabilité / réutilisabilité (Tâche 2)**
+**Maintenabilité / réutilisabilité**
 - Logique métier **pure et isolée** (`src/services/`, `src/utils/`), découplée de Mongoose et d'Express → testée (27 tests unitaires) et **réutilisée** par les routes ET la fonctionnalité « Où aller ? » (`rankByAmbiance` partagé entre `/compare` et `/where-to-go`).
 - Frontend découpé par responsabilité : **contexte** (auth, favoris), **hook** (`useLocations`), **store** Zustand (`uiStore`), **composants réutilisables** (`StateMessage`, utilitaires `ambiance.js` partagés carte/recommandation). `App.jsx` réduit à un orchestrateur (~135 lignes).
 
 ### Faiblesses restantes
 
-- **Faille volontaire `POST /devices` non authentifié** (Phase 1, documentée plus haut) : toujours présente, non corrigée par choix pédagogique. Correctif connu : ajouter le middleware `adminAuth`.
+- **Faille volontaire `POST /devices` non authentifié** (documentée plus haut) : toujours présente, non corrigée par choix pédagogique. Correctif connu : ajouter le middleware `adminAuth`.
 - **Bundle frontend volumineux (> 500 kB)** : Leaflet et Chart.js sont chargés au démarrage, sans *code-splitting*. Piste : imports dynamiques (`React.lazy`) pour la carte et les graphiques.
 - **Cache serveur en mémoire du processus** : perdu au redémarrage et non partagé en cas de *scaling horizontal* (plusieurs instances). Piste : Redis pour un cache distribué.
 - **Tension cache / temps réel** : un rafraîchissement déclenché par un événement SSE **d'un autre client** peut servir des données périmées jusqu'au TTL (≤ 30 s), car l'invalidation frontend ne se déclenche que sur les écritures locales.
@@ -347,11 +347,11 @@ la mise en cache par les navigateurs et proxys.
 - **CORS ouvert à toutes les origines** (`cors()`) : pratique pour la démo, à restreindre à l'origine du frontend en production.
 - **Cold start (Render, plan gratuit)** : le backend s'endort après ~15 min d'inactivité ; premier appel ~50 s.
 
-## Mécanisme de collecte — le bridge (Phase 1)
+## Mécanisme de collecte — le bridge
 
 `bridge/bridge.js` interroge l'API distante de **Phyphox** à intervalle régulier et **POST** chaque relevé sonore vers `POST /v1/measurements` avec l'en-tête `x-api-key`.
 
-**Pourquoi un bridge ?** Il découple la collecte du serveur : le téléphone n'a pas à connaître MongoDB ni la logique métier, il expose seulement ses buffers via l'API REST locale de Phyphox. Le bridge joue le rôle de client capteur, applique l'authentification et le format du protocole. **Fallback obligatoire** : si Phyphox est indisponible ou le réseau instable, on bascule sur la **saisie manuelle** (`POST /v1/observations`), comme prévu au rapport.
+**Pourquoi un bridge ?** Il découple la collecte du serveur : le téléphone n'a pas à connaître MongoDB ni la logique métier, il expose seulement ses buffers via l'API REST locale de Phyphox. Le bridge joue le rôle de client capteur, applique l'authentification et le format du protocole. **Fallback obligatoire** : si Phyphox est indisponible ou le réseau instable, on bascule sur la **saisie manuelle** (`POST /v1/observations`).
 
 ```bash
 # 1) créez un device et récupérez sa clé (ou via npm run seed)
@@ -362,6 +362,10 @@ export LOCATION_SLUG=cafeteria-roger-gaudry
 npm run bridge
 ```
 
+## Collecte de données
+
+Réaliser au moins **3 sessions de 20 min** à des moments différents (ex. matin calme, midi animé, après-midi). Lancer le serveur, puis le bridge pendant chaque session ; compléter par quelques observations manuelles. Le seed fournit déjà 14 jours de données simulées pour valider les endpoints sémantiques sans attendre une collecte complète.
+
 ## Tests (Postman)
 
 Importez `postman/ambiance.postman_collection.json`. Réglez les variables de collection `baseUrl`, `deviceKey` (une clé issue du seed) et `adminKey` (= `ADMIN_API_KEY`). La collection couvre : santé, lecture publique, création de device, `POST` mesure **avec** et **sans** clé (201 vs 401), observation, les 4 endpoints d'ambiance, et la suppression admin de device.
@@ -371,14 +375,6 @@ Scénarios clés à vérifier :
 - `POST /measurements` `value=999` → **422** ; champ manquant → **400**
 - `GET /ambiance/cafeteria-roger-gaudry/now` → label d'ambiance calculé
 - `GET /measurements?last=3h&from=...` → **400** (fenêtres contradictoires)
-
-## Collecte de données (Phase 1)
-
-Réaliser au moins **3 sessions de 20 min** à des moments différents (ex. matin calme, midi animé, après-midi). Lancer le serveur, puis le bridge pendant chaque session ; compléter par quelques observations manuelles. Le seed fournit déjà 14 jours de données simulées pour valider les endpoints sémantiques sans attendre une collecte complète.
-
-## `.env.example`
-
-Le fichier `.env.example` est fourni à la racine ; copiez-le en `.env` et renseignez vos secrets (jamais committés, `.env` est dans `.gitignore`).
 
 ## Dépannage : erreur `querySrv ECONNREFUSED` à la connexion MongoDB
 

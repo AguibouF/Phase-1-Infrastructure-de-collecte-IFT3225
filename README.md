@@ -219,6 +219,44 @@ Les endpoints sémantiques (`/v1/ambiance/{slug}/now`, etc.) exposent maintenant
 
 En Phase 1, `POST /devices` n'exige **aucune** authentification : n'importe qui peut créer un device et obtenir une `apiKey` valide, donc pousser de fausses mesures et fausser les vues sémantiques (et, par volume, déclencher le rate-limit pour les autres). **Solution proposée** : exiger la clé d'administration (`x-api-key` admin) sur `POST /devices`, comme pour les autres endpoints de gestion — le middleware `adminAuth` existe déjà et il suffit de l'ajouter à la route. Compléments envisageables : enrôlement par jeton d'invitation à usage unique, ou validation d'un compte propriétaire avant émission de la clé.
 
+## Stratégie de cache (Phase 3 — Tâche 4)
+
+Le cache est mis en œuvre **des deux côtés**, avec des rôles complémentaires : le
+frontend évite les allers-retours réseau, le backend évite de recalculer les
+agrégations MongoDB. Un en-tête HTTP `Cache-Control` relie les deux et autorise
+la mise en cache par les navigateurs et proxys.
+
+### Côté backend (serveur Express)
+
+| Question | Réponse |
+|---|---|
+| **Quoi ?** | Le corps JSON des **lectures publiques** (`GET`) : vues d'ambiance (`/ambiance/*`), listes `measurements`, `observations`, `locations`, `devices`. |
+| **Où ?** | Cache **en mémoire du processus** (`node-cache`, [`src/services/cacheService.ts`](src/services/cacheService.ts)), activé par le middleware [`cacheControl`](src/middlewares/cache.ts). Clé = URL complète (`req.originalUrl`, paramètres inclus). |
+| **Combien de temps ?** | TTL par endpoint : ambiance temps réel (`now`, `compare`, `where-to-go`) **30 s** ; `history`/`quiet-hours` **5 min** ; `measurements`/`observations` **60 s** ; `locations` **1 h** ; `devices` **30 min**. |
+| **Invalidation ?** | À chaque **écriture**, la route appelle `cacheService.delPattern(<segment>)` (ex. un `POST /measurements` purge `ambiance` + `measurements`). Comme la clé est l'URL — qui contient ce segment — les entrées concernées sont supprimées immédiatement. À défaut d'écriture, l'entrée expire à son TTL. Le cache est aussi perdu au redémarrage du serveur (acceptable : il se reconstruit à la demande). |
+| **En-tête** | `Cache-Control: public, max-age=<TTL>` + `X-Cache: HIT\|MISS` pour observer l'origine de la réponse. |
+
+### Côté frontend (client React)
+
+| Question | Réponse |
+|---|---|
+| **Quoi ?** | Les réponses des `GET` publics, interceptées de façon transparente par axios ([`client/src/api/ambianceApi.js`](client/src/api/ambianceApi.js) + [`client/src/utils/cache.js`](client/src/utils/cache.js)). |
+| **Où ?** | `localStorage` du navigateur (préfixe `ambiance_cache_`), clé = URL + paramètres. Persiste donc entre les rechargements de page. |
+| **Combien de temps ?** | TTL par endpoint défini dans `CACHE_CONFIG` (mêmes ordres de grandeur que le backend : ambiance 30 s, history/quiet-hours 5 min, locations 1 h…), 5 min par défaut. |
+| **Invalidation ?** | Après une écriture réussie, l'intercepteur de réponse appelle `deleteCachePattern(<segment>)` (une observation soumise purge `ambiance` + `observations`). Sinon expiration au TTL. |
+
+### Ce qui n'est **jamais** mis en cache
+
+- Toutes les **écritures** (`POST`/`PUT`/`DELETE`) — ni au front, ni au back.
+- L'**authentification** (`/v1/auth/*` : register, login, favoris, `my-locations`) — données par utilisateur / sensibles : middleware [`noCache`](src/middlewares/cache.ts) côté serveur, exclusion explicite `/auth/` côté client.
+- Le **flux temps réel** SSE (`/v1/events`) — par nature non cacheable.
+
+> **Limite connue** (voir aussi Tâche 6) : un rafraîchissement déclenché par un
+> événement SSE **provenant d'un autre client** peut être servi depuis le cache
+> local pendant la durée du TTL (jusqu'à 30 s pour l'ambiance), car
+> l'invalidation frontend ne se déclenche que sur les écritures **de ce
+> navigateur**. Le délai reste borné par le TTL court des vues temps réel.
+
 ## Mécanisme de collecte (Tâche 4) — le bridge
 
 `bridge/bridge.js` interroge l'API distante de **Phyphox** à intervalle régulier et **POST** chaque relevé sonore vers `POST /v1/measurements` avec l'en-tête `x-api-key`.

@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ambianceApi } from '../api/ambianceApi';
+import { Loading } from './common/StateMessage';
+import { ambianceColor } from '../utils/ambiance';
 
 // Fix pour les icônes Leaflet dans React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -66,25 +68,10 @@ const MapView = ({ locations, onLocationClick }) => {
     return () => source.close();
   }, []);
 
-  // Fonction pour déterminer la couleur du marqueur selon la classification
-  const getMarkerColor = (ambiance) => {
-    if (!ambiance) return '#7f8c8d'; // Gris par défaut
-    const classification = (ambiance.classification || ambiance.ambianceLabel || '').toLowerCase();
-    switch (classification) {
-      case 'calme':
-        return '#27ae60'; // Vert
-      case 'modéré':
-        return '#f39c12'; // Orange
-      case 'animé':
-        return '#e74c3c'; // Rouge
-      case 'bruyant':
-        return '#8e44ad'; // Violet
-      case 'inconnu':
-        return '#7f8c8d'; // Gris
-      default:
-        return '#7f8c8d'; // Gris
-    }
-  };
+  // Couleur du marqueur selon la classification (utilitaire partagé avec la
+  // recommandation « Où aller ? » — voir utils/ambiance.js).
+  const getMarkerColor = (ambiance) =>
+    ambianceColor(ambiance?.classification || ambiance?.ambianceLabel);
 
   // Résout ce que le marqueur doit montrer : l'ambiance actuelle si la fenêtre
   // de 30 min contient des mesures, sinon la dernière ambiance connue (fournie
@@ -121,7 +108,7 @@ const MapView = ({ locations, onLocationClick }) => {
   // Position par défaut : centre de Montréal
   const centerPosition = [45.5017, -73.5673];
 
-  if (loading) return <div className="loading">Chargement de la carte...</div>;
+  if (loading) return <Loading message="Chargement de la carte…" />;
 
   return (
     <div className="map-container">

@@ -2,10 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { ambianceApi } from '../api/ambianceApi';
+import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
+import { Loading, ErrorMessage } from './common/StateMessage';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFavorite }) => {
+const LocationDetail = ({ location, onBack }) => {
+  const { user, token } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [ambiance, setAmbiance] = useState(null);
   const [history, setHistory] = useState(null);
   const [quietHours, setQuietHours] = useState(null);
@@ -169,8 +174,8 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
     }
   };
 
-  if (loading) return <div className="loading">Chargement...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <Loading message="Chargement…" />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <div className="location-detail">
@@ -180,11 +185,11 @@ const LocationDetail = ({ location, onBack, user, token, isFavorite, onToggleFav
         <h1>{location.displayName}</h1>
         <p className="location-meta">{location.type} • {location.city}</p>
         {user && (
-          <button 
-            onClick={onToggleFavorite} 
-            className={`favorite-button ${isFavorite ? 'active' : ''}`}
+          <button
+            onClick={() => toggleFavorite(location.slug)}
+            className={`favorite-button ${isFavorite(location.slug) ? 'active' : ''}`}
           >
-            {isFavorite ? '★ Favori' : '☆ Ajouter aux favoris'}
+            {isFavorite(location.slug) ? '★ Favori' : '☆ Ajouter aux favoris'}
           </button>
         )}
       </div>

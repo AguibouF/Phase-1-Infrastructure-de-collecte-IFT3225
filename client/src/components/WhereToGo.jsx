@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ambianceApi } from '../api/ambianceApi';
 import { ambianceColor, ambianceText } from '../utils/ambiance';
+import { Loading, ErrorMessage } from './common/StateMessage';
 
 // Classe tous les lieux du plus calme au plus animé, en direct, pour aider
 // l'utilisateur à choisir sa destination sans ouvrir chaque lieu un à un.
@@ -48,8 +49,8 @@ const WhereToGo = ({ locations = [], onLocationClick }) => {
     });
   };
 
-  if (loading) return <div className="loading">Recherche du meilleur endroit…</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <Loading message="Recherche du meilleur endroit…" />;
+  if (error) return <ErrorMessage message={error} />;
 
   const ranked = data?.ranked ?? [];
   const unknown = data?.unknown ?? [];

@@ -1,271 +1,120 @@
-import { useState, useEffect } from 'react';
 import MapView from './components/MapView';
 import LocationDetail from './components/LocationDetail';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import MyLocations from './components/MyLocations';
 import WhereToGo from './components/WhereToGo';
-import { ambianceApi } from './api/ambianceApi';
+import { Loading, ErrorMessage } from './components/common/StateMessage';
+import { useLocations } from './hooks/useLocations';
+import { useAuth } from './context/AuthContext';
+import { useFavorites } from './context/FavoritesContext';
+import { useUIStore } from './store/uiStore';
 import './App.css';
 
+// En-tête réutilisé par toutes les vues (carte + écrans d'authentification).
+function AppHeader({ children }) {
+  return (
+    <header className="app-header">
+      <h1>Ambiance des Lieux</h1>
+      <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
+      {children}
+    </header>
+  );
+}
+
 function App() {
-  const [locations, setLocations] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // État d'authentification
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [authView, setAuthView] = useState(null); // 'login' ou 'register'
-  
-  // État des favoris
-  const [favorites, setFavorites] = useState([]);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const { favorites } = useFavorites();
+  const { locations, loading, error } = useLocations();
 
-  // Vue « Mes lieux » (lieux où l'utilisateur a soumis des observations)
-  const [showMyLocations, setShowMyLocations] = useState(false);
+  const view = useUIStore((s) => s.view);
+  const selectedLocation = useUIStore((s) => s.selectedLocation);
+  const showFavoritesOnly = useUIStore((s) => s.showFavoritesOnly);
+  const authView = useUIStore((s) => s.authView);
+  const notice = useUIStore((s) => s.notice);
+  const setView = useUIStore((s) => s.setView);
+  const selectLocation = useUIStore((s) => s.selectLocation);
+  const clearLocation = useUIStore((s) => s.clearLocation);
+  const toggleFavoritesOnly = useUIStore((s) => s.toggleFavoritesOnly);
+  const openAuth = useUIStore((s) => s.openAuth);
+  const closeAuth = useUIStore((s) => s.closeAuth);
 
-  // Vue « Où aller maintenant ? » (recommandation, Tâche 1)
-  const [showWhereToGo, setShowWhereToGo] = useState(false);
+  if (loading) return <Loading message="Chargement…" />;
+  if (error) return <ErrorMessage message={error} />;
 
-  // Message d'information affiché sous l'en-tête (session expirée, erreur favoris…)
-  const [notice, setNotice] = useState('');
+  // Écrans d'authentification (login / inscription).
+  if (authView === 'login' || authView === 'register') {
+    return (
+      <div className="app">
+        <AppHeader>{notice && <div className="notice-banner">{notice}</div>}</AppHeader>
+        {authView === 'login' ? <LoginForm /> : <RegisterForm />}
+        <div className="auth-back">
+          <button onClick={closeAuth} className="back-button">← Retour à la carte</button>
+        </div>
+      </div>
+    );
+  }
 
-  // Charger l'utilisateur depuis localStorage au démarrage
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-  }, []);
-
-  const fetchLocations = async () => {
-    try {
-      setLoading(true);
-      const response = await ambianceApi.getLocations();
-      setLocations(response.data);
-    } catch (err) {
-      setError('Erreur lors du chargement des lieux');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  const handleLogin = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', authToken);
-    setAuthView(null);
-    setNotice('');
-  };
-
-  const handleRegister = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', authToken);
-    setAuthView(null);
-    setNotice('');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setToken(null);
-    setFavorites([]);
-    setShowFavoritesOnly(false);
-    setShowMyLocations(false);
-    setSelectedLocation(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    setAuthView(null);
-  };
-
-  // Déconnexion automatique quand le serveur rejette le token (voir ambianceApi)
-  useEffect(() => {
-    const onExpired = () => {
-      handleLogout();
-      setNotice('Votre session a expiré. Veuillez vous reconnecter.');
-    };
-    window.addEventListener('auth:expired', onExpired);
-    return () => window.removeEventListener('auth:expired', onExpired);
-  }, []);
-
-  // Charger les favoris quand l'utilisateur se connecte
-  useEffect(() => {
-    const loadFavorites = async () => {
-      if (user && token) {
-        try {
-          const response = await ambianceApi.getFavorites(token);
-          setFavorites(response.data.favoriteLocations || []);
-        } catch (err) {
-          console.error('Erreur chargement favoris:', err);
-        }
-      }
-    };
-    loadFavorites();
-  }, [user, token]);
-
-  const handleToggleFavorite = async (locationSlug) => {
-    if (!user || !token) return;
-
-    try {
-      if (favorites.includes(locationSlug)) {
-        await ambianceApi.removeFavorite(token, locationSlug);
-        setFavorites(favorites.filter(slug => slug !== locationSlug));
-      } else {
-        await ambianceApi.addFavorite(token, locationSlug);
-        setFavorites([...favorites, locationSlug]);
-      }
-      setNotice('');
-    } catch (err) {
-      console.error('Erreur toggle favori:', err);
-      // Un 401 est déjà géré globalement (déconnexion) ; ici on couvre les autres échecs
-      if (err.response?.status !== 401) {
-        setNotice('Impossible de modifier le favori. Vérifiez votre connexion et réessayez.');
-      }
-    }
-  };
-
-  const isLocationFavorite = (locationSlug) => {
-    return favorites.includes(locationSlug);
-  };
-
-  // Filtrer les lieux selon les favoris
-  const filteredLocations = showFavoritesOnly 
-    ? locations.filter(loc => favorites.includes(loc.slug))
+  const filteredLocations = showFavoritesOnly
+    ? locations.filter((loc) => favorites.includes(loc.slug))
     : locations;
 
-  if (loading) return <div className="loading">Chargement...</div>;
-  if (error) return <div className="error">{error}</div>;
-
-  // Afficher le formulaire d'authentification si demandé
-  if (authView === 'login') {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>Ambiance des Lieux</h1>
-          <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
-        </header>
-        {notice && <div className="notice-banner">{notice}</div>}
-        <LoginForm
-          onLogin={handleLogin}
-          onSwitchToRegister={() => setAuthView('register')}
-        />
-        <div className="auth-back">
-          <button onClick={() => setAuthView(null)} className="back-button">← Retour à la carte</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (authView === 'register') {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>Ambiance des Lieux</h1>
-          <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
-        </header>
-        <RegisterForm
-          onRegister={handleRegister}
-          onSwitchToLogin={() => setAuthView('login')}
-        />
-        <div className="auth-back">
-          <button onClick={() => setAuthView(null)} className="back-button">← Retour à la carte</button>
-        </div>
-      </div>
-    );
-  }
+  const openLocationBySlug = (slug) => {
+    const loc = locations.find((l) => l.slug === slug);
+    if (loc) selectLocation(loc);
+  };
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Ambiance des Lieux</h1>
-        <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
+      <AppHeader>
         <div className="auth-buttons">
           {user ? (
             <div className="user-info">
               <span>Bonjour, {user.username}</span>
-              <button onClick={handleLogout} className="logout-button">Déconnexion</button>
+              <button onClick={logout} className="logout-button">Déconnexion</button>
             </div>
           ) : (
-            <button onClick={() => setAuthView('login')} className="login-button">Connexion</button>
+            <button onClick={() => openAuth('login')} className="login-button">Connexion</button>
           )}
         </div>
         <div className="filter-buttons">
           <button
-            onClick={() => {
-              setShowWhereToGo(!showWhereToGo);
-              setSelectedLocation(null);
-              setShowMyLocations(false);
-            }}
-            className={`filter-button ${showWhereToGo ? 'active' : ''}`}
+            onClick={() => setView(view === 'where-to-go' ? 'map' : 'where-to-go')}
+            className={`filter-button ${view === 'where-to-go' ? 'active' : ''}`}
           >
-            {showWhereToGo ? 'Retour à la carte' : 'Où aller ?'}
+            {view === 'where-to-go' ? 'Retour à la carte' : 'Où aller ?'}
           </button>
-          {user && (
+          {isAuthenticated && (
             <>
               <button
-                onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setShowMyLocations(false); setShowWhereToGo(false); }}
+                onClick={toggleFavoritesOnly}
                 className={`filter-button ${showFavoritesOnly ? 'active' : ''}`}
               >
                 {showFavoritesOnly ? 'Tous les lieux' : 'Mes favoris'}
               </button>
               <button
-                onClick={() => { setShowMyLocations(!showMyLocations); setSelectedLocation(null); setShowWhereToGo(false); }}
-                className={`filter-button ${showMyLocations ? 'active' : ''}`}
+                onClick={() => setView(view === 'my-locations' ? 'map' : 'my-locations')}
+                className={`filter-button ${view === 'my-locations' ? 'active' : ''}`}
               >
-                {showMyLocations ? 'Retour à la carte' : 'Mes lieux'}
+                {view === 'my-locations' ? 'Retour à la carte' : 'Mes lieux'}
               </button>
             </>
           )}
         </div>
-      </header>
+      </AppHeader>
 
       {notice && <div className="notice-banner">{notice}</div>}
 
-      {showWhereToGo && !selectedLocation ? (
-        <WhereToGo
-          locations={locations}
-          onLocationClick={(loc) => { setShowWhereToGo(false); setSelectedLocation(loc); }}
-        />
-      ) : user && showMyLocations && !selectedLocation ? (
-        <MyLocations
-          token={token}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-          onLocationSelect={(slug) => {
-            const loc = locations.find((l) => l.slug === slug);
-            if (loc) {
-              setShowMyLocations(false);
-              setSelectedLocation(loc);
-            }
-          }}
-        />
-      ) : selectedLocation ? (
-        <LocationDetail
-          location={selectedLocation} 
-          onBack={() => setSelectedLocation(null)} 
-          user={user}
-          token={token}
-          isFavorite={isLocationFavorite(selectedLocation.slug)}
-          onToggleFavorite={() => handleToggleFavorite(selectedLocation.slug)}
-        />
+      {selectedLocation ? (
+        <LocationDetail location={selectedLocation} onBack={clearLocation} />
+      ) : view === 'where-to-go' ? (
+        <WhereToGo locations={locations} onLocationClick={selectLocation} />
+      ) : view === 'my-locations' && isAuthenticated ? (
+        <MyLocations onLocationSelect={openLocationBySlug} />
       ) : (
         <div className="map-section">
           <h2>Carte des lieux {showFavoritesOnly ? '(Favoris)' : ''}</h2>
-          <MapView 
-            locations={filteredLocations} 
-            onLocationClick={setSelectedLocation} 
-          />
+          <MapView locations={filteredLocations} onLocationClick={selectLocation} />
         </div>
       )}
     </div>

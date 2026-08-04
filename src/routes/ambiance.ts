@@ -7,7 +7,6 @@ import { parseDuration } from '../utils/time';
 import { buildNow, buildQuietHours, buildHistory, NowPortrait, ambianceLabel, avg } from '../utils/ambiance';
 import { rankByAmbiance } from '../services/ambianceService';
 import { cacheControl } from '../middlewares/cache';
-import cacheService from '../services/cacheService';
 
 const router = express.Router();
 

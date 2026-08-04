@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ambianceApi } from '../api/ambianceApi';
+import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
+import { Loading, ErrorMessage } from './common/StateMessage';
 
-const MyLocations = ({ token, favorites, onLocationSelect, onToggleFavorite }) => {
+const MyLocations = ({ onLocationSelect }) => {
+  const { token } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [myLocations, setMyLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,8 +42,8 @@ const MyLocations = ({ token, favorites, onLocationSelect, onToggleFavorite }) =
     });
   };
 
-  if (loading) return <div className="loading">Chargement de vos lieux...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <Loading message="Chargement de vos lieux…" />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <div className="my-locations-section">
@@ -55,7 +60,7 @@ const MyLocations = ({ token, favorites, onLocationSelect, onToggleFavorite }) =
       ) : (
         <div className="my-locations-list">
           {myLocations.map((loc) => {
-            const isFavorite = favorites.includes(loc.locationSlug);
+            const favorite = isFavorite(loc.locationSlug);
             return (
             <div key={loc.locationSlug} className="my-location-card">
               <div className="my-location-info">
@@ -69,11 +74,11 @@ const MyLocations = ({ token, favorites, onLocationSelect, onToggleFavorite }) =
               </div>
               <div className="my-location-actions">
                 <button
-                  className={`favorite-toggle ${isFavorite ? 'active' : ''}`}
-                  onClick={() => onToggleFavorite(loc.locationSlug)}
-                  title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  className={`favorite-toggle ${favorite ? 'active' : ''}`}
+                  onClick={() => toggleFavorite(loc.locationSlug)}
+                  title={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 >
-                  {isFavorite ? '★' : '☆'}
+                  {favorite ? '★' : '☆'}
                 </button>
                 <button
                   className="detail-button"

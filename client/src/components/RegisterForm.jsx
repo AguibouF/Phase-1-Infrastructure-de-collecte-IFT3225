@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ambianceApi } from '../api/ambianceApi';
+import { useAuth } from '../context/AuthContext';
+import { useUIStore } from '../store/uiStore';
 
-const RegisterForm = ({ onRegister, onSwitchToLogin }) => {
+const RegisterForm = () => {
+  const { login } = useAuth();
+  const closeAuth = useUIStore((s) => s.closeAuth);
+  const clearNotice = useUIStore((s) => s.clearNotice);
+  const openAuth = useUIStore((s) => s.openAuth);
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +34,9 @@ const RegisterForm = ({ onRegister, onSwitchToLogin }) => {
 
     try {
       const response = await ambianceApi.register(username, email, password);
-      onRegister(response.data.user, response.data.token);
+      login(response.data.user, response.data.token);
+      clearNotice();
+      closeAuth();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Erreur lors de l\'inscription');
     } finally {
@@ -89,7 +98,7 @@ const RegisterForm = ({ onRegister, onSwitchToLogin }) => {
       </form>
       <p className="auth-switch">
         Déjà un compte ?{' '}
-        <button type="button" onClick={onSwitchToLogin}>
+        <button type="button" onClick={() => openAuth('login')}>
           Se connecter
         </button>
       </p>

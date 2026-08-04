@@ -1,6 +1,16 @@
 import NodeCache from 'node-cache';
 
-// Configuration du cache en mémoire
+/**
+ * Service de cache en mémoire pour le backend.
+ *
+ * Stratégie de cache :
+ * - Les données fréquemment accédées (locations, ambiance) sont mises en cache
+ * - Le cache est invalidé automatiquement après chaque écriture (POST/PUT/DELETE)
+ * - Les données sensibles (authentification) ne sont jamais mises en cache
+ *
+ * Note : Ce cache est perdu au redémarrage du serveur. Pour une production
+ * avec scaling horizontal, utiliser Redis ou une solution distribuée.
+ */
 const cache = new NodeCache({
   stdTTL: 3600, // TTL par défaut : 1 heure
   checkperiod: 600, // Vérification des entrées expirées toutes les 10 minutes

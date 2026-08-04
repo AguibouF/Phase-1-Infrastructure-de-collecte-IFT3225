@@ -1,0 +1,47 @@
+# Blueprint Render — déploie le backend (API) et le frontend (SPA) d'un coup.
+# Dans Render : New + → Blueprint → sélectionner ce dépôt. Render lit ce fichier
+# et crée les deux services. Les secrets (sync: false) sont à saisir dans le
+# tableau de bord, ils ne sont jamais committés.
+services:
+  # ---------------------------------------------------------------------------
+  # Backend : API Express + MongoDB Atlas (Web Service Node, tourne en continu)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ambiance-api
+    runtime: node
+    plan: free
+    # NB : NODE_ENV n'est PAS mis à "production" pour que `npm install` installe
+    # TypeScript (devDependency) nécessaire au build `tsc`.
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: MONGODB_URI      # à saisir : chaîne mongodb+srv d'Atlas
+        sync: false
+      - key: DB_NAME
+        value: ambiance
+      - key: ADMIN_API_KEY    # à saisir : clé admin
+        sync: false
+      - key: JWT_SECRET       # à saisir : secret JWT (long et aléatoire)
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Frontend : SPA React (Vite) → fichiers statiques servis par CDN
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ambiance-client
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: client/dist
+    envVars:
+      # URL publique du backend ci-dessus, préfixe /v1 inclus. À saisir APRÈS le
+      # premier déploiement de ambiance-api, ex. https://ambiance-api.onrender.com/v1
+      - key: VITE_API_URL
+        sync: false
+    # L'app est une SPA : toute route retombe sur index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ambianceApi } from '../api/ambianceApi';
 import { Loading } from './common/StateMessage';
 import { ambianceColor } from '../utils/ambiance';
+
+// Durée pendant laquelle un lieu reste signalé « en direct » après une mesure.
+const LIVE_MS = 4000;
 
 // Fix pour les icônes Leaflet dans React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -17,6 +20,9 @@ L.Icon.Default.mergeOptions({
 const MapView = ({ locations, onLocationClick }) => {
   const [locationsWithAmbiance, setLocationsWithAmbiance] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Lieux ayant reçu une mesure en direct très récemment (effet « prise live »).
+  const [liveSlugs, setLiveSlugs] = useState(() => new Set());
+  const liveTimers = useRef({});
 
   useEffect(() => {
     const fetchAmbianceForLocations = async () => {
@@ -52,10 +58,27 @@ const MapView = ({ locations, onLocationClick }) => {
     }
   }, [locations]);
 
-  // Temps réel (SSE, bonus) : à chaque nouvelle mesure/observation, seul le
-  // marqueur du lieu concerné est rafraîchi, sans recharger la page.
+  // Temps réel (SSE) : à chaque nouvelle mesure/observation, le marqueur du lieu
+  // concerné est rafraîchi ET signalé « en direct » (anneau pulsant + légère
+  // vibration + retour haptique sur mobile) pendant quelques secondes, pour
+  // matérialiser une prise de mesure live pendant une collecte.
   useEffect(() => {
+    // Marque un lieu comme « en direct » puis programme son extinction.
+    const markLive = (slug) => {
+      setLiveSlugs((prev) => new Set(prev).add(slug));
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(120);
+      clearTimeout(liveTimers.current[slug]);
+      liveTimers.current[slug] = setTimeout(() => {
+        setLiveSlugs((prev) => {
+          const next = new Set(prev);
+          next.delete(slug);
+          return next;
+        });
+      }, LIVE_MS);
+    };
+
     const source = ambianceApi.subscribeToAmbianceEvents(async ({ locationSlug }) => {
+      markLive(locationSlug);
       try {
         const response = await ambianceApi.getCurrentAmbiance(locationSlug);
         setLocationsWithAmbiance((prev) =>
@@ -65,7 +88,12 @@ const MapView = ({ locations, onLocationClick }) => {
         // Échec du rafraîchissement : le marqueur garde son dernier état connu
       }
     });
-    return () => source.close();
+
+    const timers = liveTimers.current;
+    return () => {
+      source.close();
+      Object.values(timers).forEach(clearTimeout);
+    };
   }, []);
 
   // Couleur du marqueur selon la classification (utilitaire partagé avec la
@@ -94,11 +122,14 @@ const MapView = ({ locations, onLocationClick }) => {
     return `il y a ${Math.round(hours / 24)} j`;
   };
 
-  // Créer une icône personnalisée avec la couleur (estompée si l'info est périmée)
-  const createCustomIcon = (color, stale = false) => {
+  // Créer une icône personnalisée avec la couleur (estompée si l'info est
+  // périmée ; anneau pulsant + vibration si une mesure vient d'arriver en direct)
+  const createCustomIcon = (color, stale = false, live = false) => {
+    const dot = `<div class="marker-dot" style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px ${stale ? 'dashed' : 'solid'} white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); opacity: ${stale ? 0.55 : 1};"></div>`;
+    const ripple = live ? `<span class="marker-ripple" style="border-color: ${color};"></span>` : '';
     return L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px ${stale ? 'dashed' : 'solid'} white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); opacity: ${stale ? 0.55 : 1};"></div>`,
+      className: `custom-marker${live ? ' marker-live' : ''}`,
+      html: dot + ripple,
       iconSize: [30, 30],
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
@@ -110,8 +141,16 @@ const MapView = ({ locations, onLocationClick }) => {
 
   if (loading) return <Loading message="Chargement de la carte…" />;
 
+  const liveLocations = locationsWithAmbiance.filter((loc) => liveSlugs.has(loc.slug));
+
   return (
     <div className="map-container">
+      {liveLocations.length > 0 && (
+        <div className="map-live-badge" role="status">
+          <span className="live-dot" />
+          Prise en direct : {liveLocations.map((loc) => loc.displayName).join(', ')}
+        </div>
+      )}
       <MapContainer center={centerPosition} zoom={13} style={{ height: '500px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -119,18 +158,20 @@ const MapView = ({ locations, onLocationClick }) => {
         />
         {locationsWithAmbiance.map((location) => {
           const display = getDisplayAmbiance(location.ambiance);
+          const live = liveSlugs.has(location.slug);
           return location.latitude && location.longitude && (
             <Marker
               key={location.slug}
               position={[location.latitude, location.longitude]}
-              icon={createCustomIcon(getMarkerColor(display.ambiance), display.stale)}
+              icon={createCustomIcon(getMarkerColor(display.ambiance), display.stale, live)}
               eventHandlers={{
                 click: () => onLocationClick(location),
               }}
             >
               <Tooltip direction="top" offset={[0, -15]}>
                 {location.displayName}
-                {display.stale && ` — dernière ambiance ${timeAgo(display.asOf)}`}
+                {live && ' — ● prise en direct'}
+                {!live && display.stale && ` — dernière ambiance ${timeAgo(display.asOf)}`}
               </Tooltip>
               <Popup>
                 <div style={{ minWidth: '200px' }}>

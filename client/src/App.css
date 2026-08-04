@@ -979,3 +979,81 @@
 }
 
 .wtg-unknown li:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Prise en direct sur la carte (collecte temps réel) ---------- */
+.map-container { position: relative; }
+
+/* Badge flottant « Prise en direct » (au-dessus des tuiles Leaflet). */
+.map-live-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(231, 76, 60, 0.95);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  max-width: 60%;
+}
+
+.map-live-badge .live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  animation: live-blink 1s infinite;
+}
+
+@keyframes live-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* Marqueur qui vient de recevoir une mesure : légère vibration du point... */
+.marker-live .marker-dot {
+  animation: marker-shake 0.5s ease-in-out infinite;
+}
+
+/* ...et un anneau qui se propage autour. */
+.marker-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  border-width: 3px;
+  border-style: solid;
+  transform: scale(1);
+  opacity: 0.7;
+  pointer-events: none;
+  animation: marker-ripple 1.2s ease-out infinite;
+}
+
+@keyframes marker-ripple {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes marker-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1.5px, 1px); }
+  50% { transform: translate(1.5px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+}
+
+/* Respecte la préférence système « moins d'animations ». */
+@media (prefers-reduced-motion: reduce) {
+  .marker-live .marker-dot,
+  .marker-ripple,
+  .map-live-badge .live-dot {
+    animation: none;
+  }
+}

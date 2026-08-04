@@ -6,6 +6,8 @@ import { parsePagination, paginationMeta } from '../utils/pagination';
 import { buildTimeWindow, isValidDate } from '../utils/time';
 import { deviceAuth } from '../middlewares/auth';
 import { emitAmbianceEvent } from '../utils/events';
+import { cacheControl, noCache } from '../middlewares/cache';
+import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
@@ -44,7 +46,7 @@ function validateMeasurement(body: MeasurementBody): { error?: ApiError; ok?: tr
 }
 
 // POST /v1/measurements — protégé (x-api-key)
-router.post('/', deviceAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', deviceAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = (req.body || {}) as MeasurementBody;
     const { error } = validateMeasurement(body);
@@ -59,12 +61,15 @@ router.post('/', deviceAuth, async (req: Request, res: Response, next: NextFunct
       timestamp: new Date(body.timestamp as string),
     });
     emitAmbianceEvent('measurement', m.locationSlug); // temps réel (SSE)
+    // Invalider le cache ambiance après nouvelle mesure
+    cacheService.delPattern('ambiance');
+    cacheService.delPattern('measurements');
     success(res, 201, m.toJSON());
   } catch (e) { next(e); }
 });
 
 // POST /v1/measurements/batch — protégé. Réponse 207 (succès partiel possible).
-router.post('/batch', deviceAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/batch', deviceAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!Array.isArray(req.body)) throw errors.validation('Le corps doit être un tableau de mesures.');
     const accepted: unknown[] = [];
@@ -87,12 +92,15 @@ router.post('/batch', deviceAuth, async (req: Request, res: Response, next: Next
       accepted.push(m.toJSON());
     }
     for (const slug of touchedSlugs) emitAmbianceEvent('measurement', slug); // temps réel (SSE)
+    // Invalider le cache ambiance après nouvelles mesures
+    cacheService.delPattern('ambiance');
+    cacheService.delPattern('measurements');
     res.status(207).json({ status: 'success', data: { accepted, rejected }, meta: { generatedAt: new Date().toISOString(), total: req.body.length, acceptedCount: accepted.length, rejectedCount: rejected.length } });
   } catch (e) { next(e); }
 });
 
 // GET /v1/measurements — public, paginé/filtré
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', cacheControl(60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filter: Record<string, unknown> = buildTimeWindow(req.query, 'timestamp');
     if (req.query.locationSlug) filter.locationSlug = String(req.query.locationSlug).toLowerCase();

@@ -6,13 +6,14 @@ import Observation from '../models/Observation';
 import Location, { LocationDocument } from '../models/Location';
 import { success, errors, ErrorDetail } from '../utils/responses';
 import { userAuth } from '../middlewares/userAuth';
+import { noCache } from '../middlewares/cache';
 
 const router = express.Router();
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'votre-secret-jet-a-changer-en-production';
 
 // POST /v1/auth/register - Inscription
-router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/register', noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, email, password } = (req.body || {}) as Record<string, string | undefined>;
 
@@ -65,7 +66,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 });
 
 // POST /v1/auth/login - Connexion
-router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/login', noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password } = (req.body || {}) as Record<string, string | undefined>;
 
@@ -109,7 +110,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 // POST /v1/auth/favorites - Ajouter un lieu aux favoris
-router.post('/favorites', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/favorites', userAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { locationSlug } = (req.body || {}) as { locationSlug?: string };
 
@@ -136,7 +137,7 @@ router.post('/favorites', userAuth, async (req: Request, res: Response, next: Ne
 });
 
 // DELETE /v1/auth/favorites/:locationSlug - Retirer un lieu des favoris
-router.delete('/favorites/:locationSlug', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/favorites/:locationSlug', userAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { locationSlug } = req.params;
 
@@ -155,7 +156,7 @@ router.delete('/favorites/:locationSlug', userAuth, async (req: Request, res: Re
 });
 
 // GET /v1/auth/favorites - Récupérer les lieux favoris
-router.get('/favorites', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/favorites', userAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.user?.userId);
     if (!user) {
@@ -175,7 +176,7 @@ interface MyLocationSummary {
 }
 
 // GET /v1/auth/my-locations - Récapitulatif des lieux où l'utilisateur a effectué des écoutes
-router.get('/my-locations', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/my-locations', userAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.user?.userId);
     if (!user) {

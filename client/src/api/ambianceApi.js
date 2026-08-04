@@ -1,14 +1,111 @@
 import axios from 'axios';
+import { generateCacheKey, getFromCache, setCache, deleteCachePattern } from '../utils/cache';
 
 // URL de l'API configurable via client/.env (VITE_API_URL) — voir .env.example
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 
-// Si le serveur rejette le token (401 sur une action protégée), on prévient
-// l'application pour qu'elle déconnecte l'utilisateur au lieu d'échouer en silence.
-// Les 401 de /auth/login et /auth/register sont exclus : ce sont de simples
-// identifiants invalides, pas une session expirée.
+// Configuration du cache par endpoint (en secondes)
+const CACHE_CONFIG = {
+  'locations': 3600, // 1 heure
+  'ambiance': 30, // 30 secondes pour les données en temps réel
+  'history': 300, // 5 minutes
+  'quiet-hours': 300, // 5 minutes
+  'where-to-go': 30, // 30 secondes
+  'compare': 30, // 30 secondes
+  'observations': 60, // 1 minute
+  'measurements': 60, // 1 minute
+  'devices': 1800, // 30 minutes
+};
+
+// Interceptor de requête : vérifie le cache avant d'envoyer la requête
+axios.interceptors.request.use(
+  (config) => {
+    // Ne pas mettre en cache les requêtes POST/PUT/DELETE
+    if (config.method && ['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+      return config;
+    }
+
+    // Ne pas mettre en cache l'authentification
+    if (config.url?.includes('/auth/')) {
+      return config;
+    }
+
+    // Déterminer le TTL basé sur l'endpoint
+    let ttl = null;
+    for (const [pattern, seconds] of Object.entries(CACHE_CONFIG)) {
+      if (config.url?.includes(pattern)) {
+        ttl = seconds * 1000; // Convertir en millisecondes
+        break;
+      }
+    }
+
+    if (!ttl) {
+      return config; // Pas de cache pour cet endpoint
+    }
+
+    const cacheKey = generateCacheKey(config.url, config.params);
+    const cachedData = getFromCache(cacheKey);
+
+    if (cachedData) {
+      // Retourner les données du cache sans faire la requête
+      config.adapter = () => Promise.resolve({
+        data: cachedData,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      });
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Interceptor de réponse : stocke les réponses dans le cache
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Ne pas mettre en cache les réponses POST/PUT/DELETE
+    if (response.config.method && ['post', 'put', 'delete', 'patch'].includes(response.config.method.toLowerCase())) {
+      // Invalider le cache après une écriture
+      if (response.config.url?.includes('/measurements')) {
+        deleteCachePattern('ambiance');
+        deleteCachePattern('measurements');
+      }
+      if (response.config.url?.includes('/observations')) {
+        deleteCachePattern('ambiance');
+        deleteCachePattern('observations');
+      }
+      if (response.config.url?.includes('/locations')) {
+        deleteCachePattern('locations');
+      }
+      if (response.config.url?.includes('/devices')) {
+        deleteCachePattern('devices');
+      }
+      return response;
+    }
+
+    // Ne pas mettre en cache l'authentification
+    if (response.config.url?.includes('/auth/')) {
+      return response;
+    }
+
+    // Déterminer le TTL basé sur l'endpoint
+    let ttl = null;
+    for (const [pattern, seconds] of Object.entries(CACHE_CONFIG)) {
+      if (response.config.url?.includes(pattern)) {
+        ttl = seconds * 1000;
+        break;
+      }
+    }
+
+    if (ttl && response.data) {
+      const cacheKey = generateCacheKey(response.config.url, response.config.params);
+      setCache(cacheKey, response.data, ttl);
+    }
+
+    return response;
+  },
   (error) => {
     const url = error.config?.url || '';
     const isAuthAttempt = url.includes('/auth/login') || url.includes('/auth/register');

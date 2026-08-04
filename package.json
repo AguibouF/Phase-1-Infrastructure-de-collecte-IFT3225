@@ -23,6 +23,7 @@
   "author": "Équipe IFT3225",
   "license": "MIT",
   "dependencies": {
+    "@types/node-cache": "^4.1.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -31,7 +32,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.3.0",
     "mongoose": "^8.6.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "node-cache": "^5.1.2"
   },
   "engines": {
     "node": ">=18"

@@ -7,6 +7,8 @@ import { buildTimeWindow, isValidDate } from '../utils/time';
 import { deviceAuth } from '../middlewares/auth';
 import { userAuth } from '../middlewares/userAuth';
 import { emitAmbianceEvent } from '../utils/events';
+import { cacheControl, noCache } from '../middlewares/cache';
+import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
@@ -28,7 +30,7 @@ function validateVocabularies(b: ObservationBody): ErrorDetail[] {
 }
 
 // POST /v1/observations — protégé (x-api-key)
-router.post('/', deviceAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', deviceAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const b = (req.body || {}) as ObservationBody;
     const missing: ErrorDetail[] = [];
@@ -47,12 +49,15 @@ router.post('/', deviceAuth, async (req: Request, res: Response, next: NextFunct
       vibe: b.vibe, notes: b.notes || '', timestamp: new Date(b.timestamp as string),
     });
     emitAmbianceEvent('observation', o.locationSlug); // temps réel (SSE)
+    // Invalider le cache ambiance après nouvelle observation
+    cacheService.delPattern('ambiance');
+    cacheService.delPattern('observations');
     success(res, 201, o.toJSON());
   } catch (e) { next(e); }
 });
 
 // POST /v1/observations/user — protégé (JWT token utilisateur)
-router.post('/user', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/user', userAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const b = (req.body || {}) as ObservationBody;
     const missing: ErrorDetail[] = [];
@@ -76,12 +81,15 @@ router.post('/user', userAuth, async (req: Request, res: Response, next: NextFun
       author: req.user?.userId, // Lier l'observation à l'utilisateur
     });
     emitAmbianceEvent('observation', o.locationSlug); // temps réel (SSE)
+    // Invalider le cache ambiance après nouvelle observation
+    cacheService.delPattern('ambiance');
+    cacheService.delPattern('observations');
     success(res, 201, o.toJSON());
   } catch (e) { next(e); }
 });
 
 // GET /v1/observations — public, paginé/filtré
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', cacheControl(60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filter: Record<string, unknown> = buildTimeWindow(req.query, 'timestamp');
     if (req.query.locationSlug) filter.locationSlug = String(req.query.locationSlug).toLowerCase();

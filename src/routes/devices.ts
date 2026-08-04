@@ -4,6 +4,8 @@ import Location from '../models/Location';
 import { success, errors, ErrorDetail } from '../utils/responses';
 import { parsePagination, paginationMeta } from '../utils/pagination';
 import { adminAuth } from '../middlewares/auth';
+import { cacheControl, noCache } from '../middlewares/cache';
+import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
@@ -11,7 +13,7 @@ const router = express.Router();
 // ⚠️ FAILLE VOLONTAIRE (Phase 1) : cet endpoint n'est PAS protégé.
 // N'importe qui peut créer un device et obtenir une clé API valide.
 // Voir la section "Sécurité" du README pour la vulnérabilité et la solution proposée.
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, locationSlug } = (req.body || {}) as { name?: string; locationSlug?: string };
     const missing: ErrorDetail[] = [];
@@ -24,12 +26,14 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       throw errors.conflict('DEVICE_EXISTS', 'Un appareil portant ce nom existe déjà pour ce lieu.');
     const device = await Device.create({ name: name as string, locationSlug: locationSlug as string });
     // La clé n'est renvoyée qu'à la création.
+    // Invalider le cache après création
+    cacheService.delPattern('devices');
     success(res, 201, { id: device.id, name: device.name, locationSlug: device.locationSlug, apiKey: device.apiKey });
   } catch (e) { next(e); }
 });
 
 // GET /v1/devices — public (la clé API n'est jamais exposée ici)
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', cacheControl(1800), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filter: Record<string, unknown> = {};
     if (req.query.locationSlug) filter.locationSlug = String(req.query.locationSlug).toLowerCase();
@@ -46,10 +50,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // DELETE /v1/devices/:id — gestion (clé admin) : révoque la clé et supprime l'appareil
-router.delete('/:id', adminAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', adminAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const device = await Device.findByIdAndDelete(req.params.id);
     if (!device) throw errors.notFound('Appareil introuvable.');
+    // Invalider le cache après suppression
+    cacheService.delPattern('devices');
     res.status(204).end();
   } catch (e) { next(e); }
 });

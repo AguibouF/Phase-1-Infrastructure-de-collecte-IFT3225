@@ -3,11 +3,13 @@ import Location from '../models/Location';
 import { success, errors, ErrorDetail } from '../utils/responses';
 import { parsePagination, paginationMeta } from '../utils/pagination';
 import { adminAuth } from '../middlewares/auth';
+import { cacheControl, noCache } from '../middlewares/cache';
+import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
 // GET /v1/locations — public
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', cacheControl(3600), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filter: Record<string, unknown> = {};
     if (req.query.city) filter.city = String(req.query.city).toLowerCase();
@@ -26,7 +28,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // POST /v1/locations — gestion (clé admin)
-router.post('/', adminAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', adminAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug, displayName, city, type } = (req.body || {}) as Record<string, string | undefined>;
     const missing: ErrorDetail[] = [];
@@ -34,12 +36,14 @@ router.post('/', adminAuth, async (req: Request, res: Response, next: NextFuncti
     if (missing.length) throw errors.validation('Champs requis manquants.', missing);
     if (await Location.findOne({ slug: String(slug).toLowerCase() })) throw errors.conflict('LOCATION_EXISTS', 'Un lieu avec ce slug existe déjà.');
     const loc = await Location.create({ slug, displayName, city, type });
+    // Invalider le cache après création
+    cacheService.delPattern('locations');
     success(res, 201, loc.toJSON());
   } catch (e) { next(e); }
 });
 
 // PUT /v1/locations/:slug — gestion (clé admin)
-router.put('/:slug', adminAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:slug', adminAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const loc = await Location.findOne({ slug: String(req.params.slug).toLowerCase() });
     if (!loc) throw errors.locationNotFound();
@@ -48,6 +52,8 @@ router.put('/:slug', adminAuth, async (req: Request, res: Response, next: NextFu
     if (city !== undefined) loc.city = city;
     if (type !== undefined) loc.type = type;
     await loc.save();
+    // Invalider le cache après modification
+    cacheService.delPattern('locations');
     success(res, 200, loc.toJSON());
   } catch (e) { next(e); }
 });

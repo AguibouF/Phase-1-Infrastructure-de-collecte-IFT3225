@@ -6,6 +6,8 @@ import { success, errors } from '../utils/responses';
 import { parseDuration } from '../utils/time';
 import { buildNow, buildQuietHours, buildHistory, NowPortrait, ambianceLabel, avg } from '../utils/ambiance';
 import { rankByAmbiance } from '../services/ambianceService';
+import { cacheControl } from '../middlewares/cache';
+import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
@@ -35,7 +37,7 @@ async function portraitsForLocations(locs: LocationDocument[], windowStr: string
 // par ville/type) du plus calme au plus animé, en direct. Réutilise le service
 // pur `rankByAmbiance` (testé) et enrichit chaque entrée du nom d'affichage et
 // des coordonnées pour l'UI.
-router.get('/where-to-go', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/where-to-go', cacheControl(30), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const windowStr = String(req.query.window || '30m');
     if (!['15m', '30m', '1h'].includes(windowStr)) {
@@ -75,7 +77,7 @@ router.get('/where-to-go', async (req: Request, res: Response, next: NextFunctio
 
 // GET /v1/ambiance/compare?locations=a,b,c&window=30m
 // Déclaré avant les routes paramétrées pour éviter la capture par :locationSlug.
-router.get('/compare', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/compare', cacheControl(30), async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.query.locations) throw errors.validation('Paramètre "locations" requis (slugs séparés par des virgules).', [{ field: 'locations', issue: 'missing' }]);
     const slugs = String(req.query.locations).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -97,7 +99,7 @@ router.get('/compare', async (req: Request, res: Response, next: NextFunction) =
 });
 
 // GET /v1/ambiance/:locationSlug/now?window=30m
-router.get('/:locationSlug/now', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:locationSlug/now', cacheControl(30), async (req: Request, res: Response, next: NextFunction) => {
   try {
     await ensureLocation(req.params.locationSlug);
     const windowStr = String(req.query.window || '30m');
@@ -138,7 +140,7 @@ router.get('/:locationSlug/now', async (req: Request, res: Response, next: NextF
 });
 
 // GET /v1/ambiance/:locationSlug/quiet-hours?days=30&threshold=55&dayOfWeek=1
-router.get('/:locationSlug/quiet-hours', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:locationSlug/quiet-hours', cacheControl(300), async (req: Request, res: Response, next: NextFunction) => {
   try {
     await ensureLocation(req.params.locationSlug);
     const days = parseInt(String(req.query.days), 10) || 30;
@@ -159,7 +161,7 @@ router.get('/:locationSlug/quiet-hours', async (req: Request, res: Response, nex
 });
 
 // GET /v1/ambiance/:locationSlug/history?last=6h&bucket=30m  (ou from/to)
-router.get('/:locationSlug/history', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:locationSlug/history', cacheControl(300), async (req: Request, res: Response, next: NextFunction) => {
   try {
     await ensureLocation(req.params.locationSlug);
     const bucketStr = String(req.query.bucket || '15m');

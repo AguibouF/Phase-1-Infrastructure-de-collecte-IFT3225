@@ -13,6 +13,7 @@ export const useUIStore = create((set) => ({
   showFavoritesOnly: false,
   authView: null, // null | 'login' | 'register'
   notice: '',
+  helpOpen: false,
 
   // Navigation principale : bascule de vue en réinitialisant le lieu ouvert.
   setView: (view) => set({ view, selectedLocation: null }),
@@ -31,6 +32,10 @@ export const useUIStore = create((set) => ({
   // Bannière d'information (session expirée, erreur favoris…).
   setNotice: (notice) => set({ notice }),
   clearNotice: () => set({ notice: '' }),
+
+  // Panneau d'aide « Comment ça marche ».
+  openHelp: () => set({ helpOpen: true }),
+  closeHelp: () => set({ helpOpen: false }),
 
   // Remise à zéro de la navigation à la déconnexion.
   resetNavigation: () =>

@@ -14,16 +14,23 @@ import { useLocations } from './hooks/useLocations';
 import { useAuth } from './context/AuthContext';
 import { useFavorites } from './context/FavoritesContext';
 import { useUIStore } from './store/uiStore';
+import HelpPanel from './components/HelpPanel';
 import './App.css';
 
 // En-tête réutilisé par toutes les vues (carte + écrans d'authentification).
+// Inclut le bouton d'aide et la modale « Comment ça marche ».
 function AppHeader({ children }) {
+  const openHelp = useUIStore((s) => s.openHelp);
   return (
-    <header className="app-header">
-      <h1>Ambiance des Lieux</h1>
-      <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
-      {children}
-    </header>
+    <>
+      <header className="app-header">
+        <button className="help-button" onClick={openHelp} aria-label="Aide : comment ça marche">?</button>
+        <h1>Ambiance des Lieux</h1>
+        <p>Consultez l'ambiance en temps réel des lieux de Montréal</p>
+        {children}
+      </header>
+      <HelpPanel />
+    </>
   );
 }
 

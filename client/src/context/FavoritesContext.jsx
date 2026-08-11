@@ -37,6 +37,8 @@ export function FavoritesProvider({ children }) {
     if (!user || !token) return;
     try {
       if (favorites.includes(slug)) {
+        // Confirmation avant retrait : action volontaire, évite les retraits accidentels.
+        if (typeof window !== 'undefined' && !window.confirm('Retirer ce lieu de vos favoris ?')) return;
         await ambianceApi.removeFavorite(token, slug);
         setFavorites((prev) => prev.filter((s) => s !== slug));
       } else {

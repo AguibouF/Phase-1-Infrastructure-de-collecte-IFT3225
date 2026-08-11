@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -20,43 +20,41 @@ L.Icon.Default.mergeOptions({
 const MapView = ({ locations, onLocationClick }) => {
   const [locationsWithAmbiance, setLocationsWithAmbiance] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Vrai si l'ambiance d'au moins un lieu n'a pas pu être chargée (échec réseau/serveur).
+  const [ambianceError, setAmbianceError] = useState(false);
   // Lieux ayant reçu une mesure en direct très récemment (effet « prise live »).
   const [liveSlugs, setLiveSlugs] = useState(() => new Set());
   const liveTimers = useRef({});
 
-  useEffect(() => {
-    const fetchAmbianceForLocations = async () => {
-      try {
-        const locationsWithData = await Promise.all(
-          locations.map(async (location) => {
-            try {
-              const response = await ambianceApi.getCurrentAmbiance(location.slug);
-              return {
-                ...location,
-                ambiance: response.data,
-              };
-            } catch (error) {
-              console.error(`Erreur ambiance pour ${location.slug}:`, error);
-              return {
-                ...location,
-                ambiance: null,
-              };
-            }
-          })
-        );
-        setLocationsWithAmbiance(locationsWithData);
-      } catch (error) {
-        console.error('Erreur récupération ambiance:', error);
-        setLocationsWithAmbiance(locations);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (locations.length > 0) {
-      fetchAmbianceForLocations();
+  const fetchAmbianceForLocations = useCallback(async () => {
+    let failures = 0;
+    try {
+      const locationsWithData = await Promise.all(
+        locations.map(async (location) => {
+          try {
+            const response = await ambianceApi.getCurrentAmbiance(location.slug);
+            return { ...location, ambiance: response.data };
+          } catch (error) {
+            failures += 1;
+            console.error(`Erreur ambiance pour ${location.slug}:`, error);
+            return { ...location, ambiance: null };
+          }
+        })
+      );
+      setLocationsWithAmbiance(locationsWithData);
+      setAmbianceError(failures > 0);
+    } catch (error) {
+      console.error('Erreur récupération ambiance:', error);
+      setLocationsWithAmbiance(locations);
+      setAmbianceError(true);
+    } finally {
+      setLoading(false);
     }
   }, [locations]);
+
+  useEffect(() => {
+    if (locations.length > 0) fetchAmbianceForLocations();
+  }, [locations, fetchAmbianceForLocations]);
 
   // Temps réel (SSE) : à chaque nouvelle mesure/observation, le marqueur du lieu
   // concerné est rafraîchi ET signalé « en direct » (anneau pulsant + légère
@@ -145,6 +143,12 @@ const MapView = ({ locations, onLocationClick }) => {
 
   return (
     <div className="map-container">
+      {ambianceError && (
+        <div className="map-notice" role="alert">
+          <span>Impossible de charger l'ambiance en direct de certains lieux.</span>
+          <button onClick={() => { setAmbianceError(false); fetchAmbianceForLocations(); }}>Réessayer</button>
+        </div>
+      )}
       {liveLocations.length > 0 && (
         <div className="map-live-badge" role="status">
           <span className="live-dot" />

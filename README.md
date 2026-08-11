@@ -48,6 +48,7 @@ L'application client permet de :
 - Créer un compte et se connecter
 - Soumettre des observations (authentifié)
 - Gérer ses lieux favoris
+- Consulter l'**aide intégrée « Comment ça marche »** (bouton `?` dans l'en-tête) : explication du principe, lecture de la carte et façon de contribuer
 
 `npm run seed` affiche les **clés API des devices**. Le seed est **non destructif** : il conserve les lieux, les devices (les clés restent donc stables d'une exécution à l'autre) et les **collectes réelles** (distinguées des données simulées par `receivedAt ≈ timestamp`) ; seules les données de démonstration sont régénérées. Il synchronise aussi automatiquement `DEVICE_API_KEY` dans le `.env` avec le device correspondant à votre `LOCATION_SLUG` — aucun copier-coller nécessaire pour le bridge.
 

@@ -77,6 +77,8 @@ const MyLocations = ({ onLocationSelect }) => {
                   className={`favorite-toggle ${favorite ? 'active' : ''}`}
                   onClick={() => toggleFavorite(loc.locationSlug)}
                   title={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  aria-label={favorite ? `Retirer ${loc.displayName} des favoris` : `Ajouter ${loc.displayName} aux favoris`}
+                  aria-pressed={favorite}
                 >
                   {favorite ? '★' : '☆'}
                 </button>

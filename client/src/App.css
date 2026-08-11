@@ -37,6 +37,8 @@
   margin-top: 16px;
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .login-button {
@@ -377,8 +379,17 @@
 }
 
 .map-container .leaflet-container {
+  height: 500px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+}
+
+/* Sur mobile, la carte est plus courte pour laisser voir la légende sous la carte. */
+@media (max-width: 700px) {
+  .map-container .leaflet-container {
+    height: 62vh;
+    max-height: 460px;
+  }
 }
 
 .map-legend {
@@ -1055,5 +1066,28 @@
   .marker-ripple,
   .map-live-badge .live-dot {
     animation: none;
+  }
+}
+
+/* ---------- Accessibilité & ergonomie tactile ---------- */
+/* Focus clavier visible sur tous les éléments interactifs. */
+:where(button, a, select, input, textarea, [role="button"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Cibles tactiles confortables (≥ 44 px) sur écrans tactiles ou petits écrans,
+   sans alourdir l'interface au pointeur fin (souris) sur grand écran. */
+@media (pointer: coarse), (max-width: 700px) {
+  button,
+  .filter-button,
+  .login-button,
+  .logout-button,
+  .back-button,
+  .favorite-toggle,
+  .detail-button,
+  select {
+    min-height: 44px;
   }
 }

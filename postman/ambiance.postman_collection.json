@@ -12,8 +12,8 @@
   "item": [
     { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/v1/health" } },
     { "name": "GET locations", "request": { "method": "GET", "url": "{{baseUrl}}/v1/locations" } },
-    { "name": "POST device (NON protégé - faille volontaire)", "request": {
-        "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }],
+    { "name": "POST device (clé admin)", "request": {
+        "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "x-api-key", "value": "{{adminKey}}" }],
         "url": "{{baseUrl}}/v1/devices",
         "body": { "mode": "raw", "raw": "{\n  \"name\": \"mon-tel\",\n  \"locationSlug\": \"cafeteria-roger-gaudry\"\n}" } } },
     { "name": "POST measurement (x-api-key)", "request": {

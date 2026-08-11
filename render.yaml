@@ -37,7 +37,7 @@ services:
     staticPublishPath: client/dist
     envVars:
       # URL publique du backend ci-dessus, préfixe /v1 inclus. À saisir APRÈS le
-      # premier déploiement de ambiance-api, ex. https://ambiance-api.onrender.com/v1
+      # premier déploiement du backend, ex. https://<votre-backend>.onrender.com/v1
       - key: VITE_API_URL
         sync: false
     # L'app est une SPA : toute route retombe sur index.html.

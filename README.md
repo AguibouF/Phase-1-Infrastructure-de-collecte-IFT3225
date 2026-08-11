@@ -98,8 +98,10 @@ Le fichier `.env.example` est fourni à la racine ; copiez-le en `.env` et rense
 L'application est déployée sur **Render** en deux services (voir le Blueprint
 [`render.yaml`](render.yaml) qui les décrit) :
 
-- **Backend** (Web Service Node) : <https://ambiance-api.onrender.com> — santé : `/v1/health`
-- **Frontend** (Static Site) : <https://ambiance-client.onrender.com>
+- **Backend** (Web Service Node) — point de santé : `/v1/health`
+- **Frontend** (Static Site)
+
+> Les URLs publiques des services déployés ne sont pas listées ici (dépôt public).
 
 | Service | Commande de build | Démarrage / publication |
 |---|---|---|
@@ -108,7 +110,7 @@ L'application est déployée sur **Render** en deux services (voir le Blueprint
 
 **Variables d'environnement à définir dans Render :**
 - Backend : `MONGODB_URI`, `DB_NAME`, `ADMIN_API_KEY`, `JWT_SECRET` (le `PORT` est fourni automatiquement par Render).
-- Frontend : `VITE_API_URL = https://ambiance-api.onrender.com/v1` — **variable de build** : toute modification exige un redéploiement du frontend.
+- Frontend : `VITE_API_URL = https://<votre-backend>.onrender.com/v1` — **variable de build** : toute modification exige un redéploiement du frontend.
 
 **Prérequis :** dans MongoDB Atlas, autoriser l'accès réseau depuis Render
 (*Network Access* → `0.0.0.0/0`, les IP sortantes du plan gratuit étant
@@ -185,7 +187,7 @@ Tous les chemins sont préfixés par `/v1`. Enveloppe de réponse : `{ status, d
 ### Gestion des appareils
 | Méthode | Endpoint | Corps / params | Auth | Codes |
 |---|---|---|---|---|
-| POST | `/v1/devices` | `{ name, locationSlug }` | **aucune (faille volontaire)** | 201, 400, 404, 409 |
+| POST | `/v1/devices` | `{ name, locationSlug }` | `x-api-key` admin | 201, 400, 401, 403, 404, 409 |
 | GET | `/v1/devices` | `locationSlug?, page?, perPage?, sort?` | publique | 200 |
 | DELETE | `/v1/devices/{id}` | — | `x-api-key` admin | 204, 401, 403, 404 |
 
@@ -263,7 +265,7 @@ Les endpoints d'**écriture** (`POST /measurements`, `POST /observations`, `POST
 - **403** `FORBIDDEN` — clé invalide / device inexistant
 - sinon la requête est autorisée et `lastSeenAt` du device est mis à jour
 
-Les requêtes de **lecture** (`GET`) restent **publiques**. Les endpoints de gestion (`DELETE /devices`, `POST`/`PUT /locations`) utilisent une **clé d'administration** (`ADMIN_API_KEY`), via le même en-tête `x-api-key`.
+Les requêtes de **lecture** (`GET`) restent **publiques**. Les endpoints de gestion (`POST`/`DELETE /devices`, `POST`/`PUT /locations`) utilisent une **clé d'administration** (`ADMIN_API_KEY`), via le même en-tête `x-api-key`.
 
 ### Authentification utilisateur (JWT)
 L'application client utilise l'authentification JWT pour les utilisateurs :
@@ -290,8 +292,8 @@ Gère l'authentification des utilisateurs :
 ### Champ `ambianceLabel`
 Les endpoints sémantiques (`/v1/ambiance/{slug}/now`, etc.) exposent le champ `ambianceLabel` indiquant la classification de l'ambiance (calme, modéré, animé, bruyant, inconnu).
 
-### Faille volontaire : `POST /devices` non protégé
-`POST /devices` n'exige **aucune** authentification : n'importe qui peut créer un device et obtenir une `apiKey` valide, donc pousser de fausses mesures et fausser les vues sémantiques (et, par volume, déclencher le rate-limit pour les autres). **Solution proposée** : exiger la clé d'administration (`x-api-key` admin) sur `POST /devices`, comme pour les autres endpoints de gestion — le middleware `adminAuth` existe déjà et il suffit de l'ajouter à la route. Compléments envisageables : enrôlement par jeton d'invitation à usage unique, ou validation d'un compte propriétaire avant émission de la clé.
+### Sécurisation de `POST /devices` (faille de Phase 1 corrigée)
+En Phase 1, `POST /devices` n'exigeait **aucune** authentification : n'importe qui pouvait créer un device et obtenir une `apiKey` valide, donc pousser de fausses mesures et fausser les vues sémantiques (et, par volume, déclencher le rate-limit pour les autres). Cette faille volontaire a été **corrigée** : la création d'un appareil exige désormais la **clé d'administration** (`x-api-key` admin), au même titre que les autres endpoints de gestion (`DELETE /devices`, `POST`/`PUT /locations`) — le middleware `adminAuth` est appliqué à la route (`401` si en-tête absent, `403` si clé invalide). Compléments envisageables : enrôlement par jeton d'invitation à usage unique, ou validation d'un compte propriétaire avant émission de la clé.
 
 ## Stratégie de cache
 
@@ -350,7 +352,6 @@ la mise en cache par les navigateurs et proxys.
 
 ### Faiblesses restantes
 
-- **Faille volontaire `POST /devices` non authentifié** (documentée plus haut) : toujours présente, non corrigée par choix pédagogique. Correctif connu : ajouter le middleware `adminAuth`.
 - **Cache serveur en mémoire du processus** : perdu au redémarrage et non partagé en cas de *scaling horizontal* (plusieurs instances). Piste : Redis pour un cache distribué.
 - **Tension cache / temps réel** : un rafraîchissement déclenché par un événement SSE **d'un autre client** peut servir des données périmées jusqu'au TTL (≤ 30 s), car l'invalidation frontend ne se déclenche que sur les écritures locales.
 - **Requêtes N+1 dans `/where-to-go` et `/compare`** : une paire de requêtes par lieu (boucle) plutôt qu'une agrégation groupée. Acceptable au volume actuel (peu de lieux), à revoir si le nombre de lieux croît fortement.
@@ -380,7 +381,7 @@ Réaliser au moins **3 sessions de 20 min** à des moments différents (ex. mati
 
 ## Tests (Postman)
 
-Importez `postman/ambiance.postman_collection.json`. Réglez les variables de collection `baseUrl`, `deviceKey` (une clé issue du seed) et `adminKey` (= `ADMIN_API_KEY`). La collection couvre : santé, lecture publique, création de device, `POST` mesure **avec** et **sans** clé (201 vs 401), observation, les 4 endpoints d'ambiance, et la suppression admin de device.
+Importez `postman/ambiance.postman_collection.json`. Réglez les variables de collection `baseUrl`, `deviceKey` (une clé issue du seed) et `adminKey` (= `ADMIN_API_KEY`). La collection couvre : santé, lecture publique, création de device (**clé admin**), `POST` mesure **avec** et **sans** clé (201 vs 401), observation, les 4 endpoints d'ambiance, et la suppression admin de device.
 
 Scénarios clés à vérifier :
 - `POST /measurements` sans `x-api-key` → **401** ; avec mauvaise clé → **403** ; avec clé du seed → **201**

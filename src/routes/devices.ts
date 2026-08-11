@@ -9,11 +9,12 @@ import cacheService from '../services/cacheService';
 
 const router = express.Router();
 
-// POST /v1/devices
-// ⚠️ FAILLE VOLONTAIRE (Phase 1) : cet endpoint n'est PAS protégé.
-// N'importe qui peut créer un device et obtenir une clé API valide.
-// Voir la section "Sécurité" du README pour la vulnérabilité et la solution proposée.
-router.post('/', noCache, async (req: Request, res: Response, next: NextFunction) => {
+// POST /v1/devices — gestion (clé admin)
+// La faille volontaire de la Phase 1 (endpoint ouvert) a été corrigée : la
+// création d'un appareil, qui émet une clé API valide, exige désormais la clé
+// d'administration (x-api-key admin), comme les autres endpoints de gestion.
+//   401 MISSING_AUTH -> en-tête absent ; 403 FORBIDDEN -> clé admin invalide
+router.post('/', adminAuth, noCache, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, locationSlug } = (req.body || {}) as { name?: string; locationSlug?: string };
     const missing: ErrorDetail[] = [];

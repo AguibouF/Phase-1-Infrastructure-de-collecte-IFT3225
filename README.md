@@ -59,14 +59,14 @@ Les **services métier** du backend sont couverts par des tests unitaires
 Les dépendances sont installées par `npm install` à la racine ; ensuite :
 
 ```bash
-npm test            # lance toute la suite une fois (27 tests)
+npm test            # lance toute la suite une fois (33 tests)
 npm run test:watch  # mode watch pendant le développement
 ```
 
 Couverture : `ambianceService` (portrait d'ambiance, créneaux calmes, historique,
-classement « où aller »), les utilitaires de temps (`parseDuration`,
-`buildTimeWindow`) et le middleware de cache (HIT/MISS, invalidation). Tous les
-tests passent sur le code livré et déployé.
+classement « où aller »), `cacheService` (set/get, invalidation par motif, TTL),
+les utilitaires de temps (`parseDuration`, `buildTimeWindow`) et le middleware de
+cache (HIT/MISS, invalidation). Tous les tests passent sur le code livré et déployé.
 
 ### Variables d'environnement (`.env`)
 
@@ -347,8 +347,13 @@ la mise en cache par les navigateurs et proxys.
 - **Code-splitting** (`React.lazy` + `Suspense`) : la carte (Leaflet) et le détail (Chart.js) sont chargés à la demande dans des chunks séparés. Le bundle initial passe de ~587 kB à ~251 kB, et Chart.js n'est chargé qu'à l'ouverture d'un lieu.
 
 **Maintenabilité / réutilisabilité**
-- Logique métier **pure et isolée** (`src/services/`, `src/utils/`), découplée de Mongoose et d'Express → testée (27 tests unitaires) et **réutilisée** par les routes ET la fonctionnalité « Où aller ? » (`rankByAmbiance` partagé entre `/compare` et `/where-to-go`).
+- Logique métier **pure et isolée** (`src/services/`, `src/utils/`), découplée de Mongoose et d'Express → testée (33 tests unitaires) et **réutilisée** par les routes ET la fonctionnalité « Où aller ? » (`rankByAmbiance` partagé entre `/compare` et `/where-to-go`).
 - Frontend découpé par responsabilité : **contexte** (auth, favoris), **hook** (`useLocations`), **store** Zustand (`uiStore`), **composants réutilisables** (`StateMessage`, utilitaires `ambiance.js` partagés carte/recommandation). `App.jsx` réduit à un orchestrateur (~135 lignes).
+
+**Utilisabilité & accessibilité**
+- **Aide en application** « Comment ça marche » (modale accessible : `role="dialog"`, `aria-modal`, fermeture Échap/clic/bouton).
+- **Retour d'erreur visible** : échec de chargement de l'ambiance signalé avec un bouton *Réessayer* (au lieu d'un échec silencieux) ; **confirmation** avant retrait d'un favori.
+- **Responsive & tactile** : hauteur de carte adaptative, cibles tactiles ≥ 44 px sur petit écran/tactile, focus clavier visible (`:focus-visible`), `aria-label` sur les boutons-icônes, respect de `prefers-reduced-motion`.
 
 ### Faiblesses restantes
 

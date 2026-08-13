@@ -25,9 +25,11 @@
 // ============================================================================
 require('dotenv').config();
 
-const PHYPHOX_URL = process.env.PHYPHOX_URL || 'http://192.168.1.42:8080';
+const PHYPHOX_URL = (process.env.PHYPHOX_URL || 'http://192.168.1.42:8080').replace(/\/+$/, '');
 const PHYPHOX_BUFFER = process.env.PHYPHOX_BUFFER || 'dB';
-const API_URL = process.env.API_URL || 'http://localhost:3000';
+// Un slash final produirait `.../v1/measurements` précédé d'un double slash, que
+// Express ne route pas -> 404 incompréhensible. On normalise.
+const API_URL = (process.env.API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const DEVICE_API_KEY = process.env.DEVICE_API_KEY;
 const LOCATION_SLUG = process.env.LOCATION_SLUG || 'cafeteria-roger-gaudry';
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS, 10) || 5000;
@@ -37,36 +39,62 @@ if (!DEVICE_API_KEY) {
   process.exit(1);
 }
 
+// Sans port explicite, Node tape sur le 80 alors que Phyphox écoute sur le 8080 :
+// cause d'échec la plus fréquente, et invisible dans le message d'erreur de fetch.
+if (!/:\d+$/.test(PHYPHOX_URL)) {
+  console.warn(`⚠ PHYPHOX_URL=${PHYPHOX_URL} n'indique pas de port -> port 80 utilisé. Phyphox écoute sur 8080 (ex. ${PHYPHOX_URL}:8080).`);
+}
+
+// `fetch` échoue avec un message unique et opaque ("fetch failed") quelle que soit
+// la cause réseau. On remonte le code bas niveau (ECONNREFUSED, EHOSTUNREACH,
+// ETIMEDOUT...) pour distinguer un port fermé d'un hôte injoignable.
+function describe(err) {
+  const code = err?.cause?.code;
+  return code ? `${err.message} (${code})` : err.message;
+}
+
 async function readPhyphox() {
   const url = `${PHYPHOX_URL}/get?${encodeURIComponent(PHYPHOX_BUFFER)}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-  if (!res.ok) throw new Error(`Phyphox HTTP ${res.status}`);
+  let res;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  } catch (e) {
+    throw new Error(`[phyphox] ${url} injoignable : ${describe(e)}`);
+  }
+  if (!res.ok) throw new Error(`[phyphox] HTTP ${res.status}`);
   const json = await res.json();
   // Format Phyphox : { buffer: { <name>: { buffer: [v1, v2, ...] } } }
   const buf = json.buffer?.[PHYPHOX_BUFFER]?.buffer;
-  if (!Array.isArray(buf) || !buf.length) throw new Error('Buffer Phyphox vide');
+  if (!Array.isArray(buf) || !buf.length)
+    throw new Error(`[phyphox] buffer "${PHYPHOX_BUFFER}" vide (expérience en pause ? mauvais nom de buffer ?)`);
   const value = buf[buf.length - 1];
-  if (typeof value !== 'number' || Number.isNaN(value)) throw new Error('Valeur Phyphox invalide');
+  if (typeof value !== 'number' || Number.isNaN(value)) throw new Error('[phyphox] valeur invalide');
   return value;
 }
 
 async function postMeasurement(value) {
-  const res = await fetch(`${API_URL}/v1/measurements`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': DEVICE_API_KEY },
-    body: JSON.stringify({
-      type: 'noise_level',
-      value: Math.round(value * 10) / 10,
-      unit: 'dB',
-      locationSlug: LOCATION_SLUG,
-      timestamp: new Date().toISOString(),
-    }),
-  });
-  if (res.status === 401) throw new Error('401 x-api-key absent');
-  if (res.status === 403) throw new Error('403 clé invalide');
+  const url = `${API_URL}/v1/measurements`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': DEVICE_API_KEY },
+      body: JSON.stringify({
+        type: 'noise_level',
+        value: Math.round(value * 10) / 10,
+        unit: 'dB',
+        locationSlug: LOCATION_SLUG,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  } catch (e) {
+    throw new Error(`[api] ${url} injoignable : ${describe(e)}`);
+  }
+  if (res.status === 401) throw new Error('[api] 401 x-api-key absent');
+  if (res.status === 403) throw new Error('[api] 403 clé invalide');
   if (!res.ok && res.status !== 201) {
     const t = await res.text();
-    throw new Error(`POST échec ${res.status}: ${t}`);
+    throw new Error(`[api] POST échec ${res.status}: ${t}`);
   }
   return res.status;
 }
